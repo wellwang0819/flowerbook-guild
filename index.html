@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>花园世界 · 公会花册</title>
+  <meta name="description" content="花园世界游戏公会花卉协作工具" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --background: 210 20% 98%;
+      --foreground: 222 47% 11%;
+      --card: 0 0% 100%;
+      --card-foreground: 222 47% 11%;
+      --primary: 142 64% 24%;
+      --primary-foreground: 0 0% 100%;
+      --secondary: 210 20% 96%;
+      --muted: 220 13% 91%;
+      --muted-foreground: 220 9% 46%;
+      --accent: 48 96% 47%;
+      --border: 220 13% 91%;
+      --input: 220 13% 91%;
+      --ring: 142 64% 24%;
+      --radius: 0.75rem;
+      --radius-inner: 0.375rem;
+      --shadow-card: 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-card-hover: 0 4px 12px rgba(0,0,0,0.08);
+      --score-low: 220 9% 46%;
+      --score-mid: 142 64% 24%;
+      --score-high: 48 96% 47%;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-font-smoothing: antialiased; }
+    body { font-family: 'Inter', 'Instrument Sans', ui-sans-serif, system-ui, -apple-system, sans-serif; background-color: hsl(var(--background)); color: hsl(var(--foreground)); line-height: 1.5; min-height: 100vh; }
+    button { font-family: inherit; cursor: pointer; }
+    .app-header { position: sticky; top: 0; z-index: 50; background: hsl(var(--background) / 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid hsl(var(--border)); }
+    .app-header-inner { max-width: 80rem; margin: 0 auto; padding: 0.5rem 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .app-logo { display: flex; align-items: center; gap: 0.4rem; font-weight: 700; font-size: 1rem; color: hsl(var(--primary)); white-space: nowrap; }
+    .app-logo svg { width: 1.35rem; height: 1.35rem; flex-shrink: 0; }
+    .app-nav { display: flex; gap: 0.15rem; margin-left: 1rem; }
+    .app-nav a { padding: 0.35rem 0.65rem; border-radius: var(--radius); font-size: 0.85rem; font-weight: 500; color: hsl(var(--muted-foreground)); cursor: pointer; transition: all 0.15s; text-decoration: none; }
+    .app-nav a:hover { background: hsl(var(--secondary)); color: hsl(var(--foreground)); }
+    .app-nav a.active { background: hsl(var(--primary) / 0.1); color: hsl(var(--primary)); }
+    .user-section { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
+    .user-name { font-size: 0.85rem; color: hsl(var(--muted-foreground)); }
+    .user-avatar { width: 1.8rem; height: 1.8rem; border-radius: 9999px; background: hsl(var(--primary) / 0.15); color: hsl(var(--primary)); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; }
+    .btn { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.85rem; border-radius: var(--radius); font-size: 0.85rem; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: all 0.15s; }
+    .btn-primary { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-ghost { background: transparent; color: hsl(var(--muted-foreground)); border: none; }
+    .btn-ghost:hover { background: hsl(var(--secondary)); }
+    .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.78rem; }
+    .main-content { max-width: 80rem; margin: 0 auto; padding: 1rem; }
+    @media (min-width: 640px) { .main-content { padding: 1.5rem; } }
+    .auth-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; background: radial-gradient(ellipse 120% 80% at 50% -20%, hsl(142 64% 24% / 0.12), transparent 55%), radial-gradient(ellipse 90% 60% at 80% 100%, hsl(48 96% 47% / 0.06), transparent 50%); }
+    .auth-card { width: 100%; max-width: 24rem; background: hsl(var(--card)); border-radius: calc(var(--radius) * 2); border: 1px solid hsl(var(--border)); padding: 2rem 1.75rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.1); }
+    .auth-card h1 { text-align: center; font-size: 1.5rem; font-weight: 700; color: hsl(var(--primary)); margin-bottom: 0.25rem; }
+    .auth-card .subtitle { text-align: center; font-size: 0.85rem; color: hsl(var(--muted-foreground)); margin-bottom: 1.5rem; }
+    .form-group { margin-bottom: 0.85rem; }
+    .form-group label { display: block; font-size: 0.82rem; font-weight: 500; margin-bottom: 0.3rem; }
+    .form-group input { width: 100%; padding: 0.55rem 0.75rem; border: 1px solid hsl(var(--input)); border-radius: var(--radius); font-size: 0.9rem; outline: none; background: hsl(var(--card)); color: hsl(var(--foreground)); }
+    .form-group input:focus { border-color: hsl(var(--ring)); box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2); }
+    .auth-error { color: hsl(0 72% 51%); font-size: 0.8rem; margin-bottom: 0.5rem; }
+    .page-header { margin-bottom: 1rem; }
+    .page-header h1 { font-size: 1.25rem; font-weight: 700; }
+    .page-header p { font-size: 0.85rem; color: hsl(var(--muted-foreground)); margin-top: 0.15rem; }
+        .toolbar { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; align-items: center; }
+    .search-box { flex: 1; min-width: 200px; position: relative; }
+    .search-box input { width: 100%; padding: 0.5rem 0.75rem 0.5rem 2.25rem; border: 1px solid hsl(var(--input)); border-radius: var(--radius); background: hsl(var(--card)); color: hsl(var(--foreground)); font-size: 0.875rem; outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
+    .search-box input:focus { border-color: hsl(var(--ring)); box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2); }
+    .search-box .search-icon { position: absolute; left: 0.7rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: hsl(var(--muted-foreground)); }
+    .view-toggle { display: flex; border: 1px solid hsl(var(--border)); border-radius: var(--radius); overflow: hidden; }
+    .view-toggle button { padding: 0.4rem 0.7rem; border: none; background: transparent; cursor: pointer; color: hsl(var(--muted-foreground)); transition: background 0.15s, color 0.15s; display: flex; align-items: center; }
+    .view-toggle button.active { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+    .view-toggle button:not(.active):hover { background: hsl(var(--secondary)); }
+    .view-toggle svg { width: 1rem; height: 1rem; }
+    .channel-filters { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+    .channel-btn { padding: 0.3rem 0.7rem; font-size: 0.8rem; border-radius: 9999px; border: 1px solid hsl(var(--border)); background: transparent; cursor: pointer; color: hsl(var(--muted-foreground)); transition: all 0.15s; white-space: nowrap; }
+    .channel-btn:hover { border-color: hsl(var(--primary) / 0.4); color: hsl(var(--primary)); }
+    .channel-btn.active { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); border-color: hsl(var(--primary)); }
+    .channel-btn.all-btn { font-weight: 600; }
+    .channel-btn.all-btn.active { background: hsl(var(--foreground)); border-color: hsl(var(--foreground)); }
+    .filter-stats { font-size: 0.8rem; color: hsl(var(--muted-foreground)); margin-bottom: 0.75rem; }
+    .filter-stats strong { color: hsl(var(--foreground)); }
+    .flower-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.75rem; }
+    @media (min-width: 640px) { .flower-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); } }
+    @media (min-width: 1024px) { .flower-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); } }
+    .flower-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: var(--radius); padding: 0.75rem; box-shadow: var(--shadow-card); transition: box-shadow 0.2s, transform 0.2s; cursor: default; display: flex; flex-direction: column; }
+    .flower-card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-2px); }
+    .flower-card .img-wrap { aspect-ratio: 1; border-radius: var(--radius-inner); background: hsl(var(--muted)); overflow: hidden; margin-bottom: 0.6rem; display: flex; align-items: center; justify-content: center; position: relative; }
+    .flower-card .img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+    .flower-card .img-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: hsl(var(--muted-foreground)); font-size: 2rem; opacity: 0.4; }
+    .flower-card .flower-name { font-size: 0.875rem; font-weight: 600; margin-bottom: 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .flower-card .flower-meta { display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; color: hsl(var(--muted-foreground)); }
+    .flower-card .status-badge { display: inline-flex; align-items: center; gap: 0.2rem; padding: 0.1rem 0.4rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .status-badge.owned { background: hsl(48 96% 47% / 0.1); color: hsl(48 96% 47%); }
+    .status-badge.missing { background: hsl(220 9% 46% / 0.1); color: hsl(220 9% 46%); }
+    .status-badge.planting { background: hsl(142 64% 24% / 0.1); color: hsl(142 64% 24%); }
+    .flower-card .score-badge { display: inline-flex; align-items: center; gap: 0.2rem; padding: 0.1rem 0.4rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; }
+    .score-low { color: hsl(var(--score-low)); background: hsl(var(--score-low) / 0.1); }
+    .score-mid { color: hsl(var(--score-mid)); background: hsl(var(--score-mid) / 0.1); }
+    .score-high { color: hsl(var(--score-high)); background: hsl(var(--score-high) / 0.1); }
+    .channel-tag { display: inline-block; padding: 0.1rem 0.35rem; border-radius: 0.25rem; font-size: 0.7rem; background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); white-space: nowrap; }
+    .flower-table-wrap { overflow-x: auto; border: 1px solid hsl(var(--border)); border-radius: var(--radius); background: hsl(var(--card)); }
+    .flower-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .flower-table th { text-align: left; padding: 0.6rem 0.75rem; font-weight: 600; font-size: 0.78rem; color: hsl(var(--muted-foreground)); border-bottom: 1px solid hsl(var(--border)); background: hsl(var(--secondary)); white-space: nowrap; position: sticky; top: 0; }
+    .flower-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid hsl(var(--border)); vertical-align: middle; }
+    .flower-table tr:last-child td { border-bottom: none; }
+    .flower-table tr:hover td { background: hsl(var(--secondary) / 0.5); }
+    .flower-table .img-cell { width: 2.5rem; padding: 0.3rem; }
+    .flower-table .img-cell .img-wrap-sm { width: 2.25rem; height: 2.25rem; border-radius: var(--radius-inner); background: hsl(var(--muted)); overflow: hidden; display: flex; align-items: center; justify-content: center; }
+    .flower-table .img-cell img { width: 100%; height: 100%; object-fit: cover; }
+    .flower-table .img-cell .img-placeholder-sm { font-size: 0.85rem; opacity: 0.35; }
+    .name-cell { font-weight: 600; white-space: nowrap; }
+    .source-detail { font-size: 0.78rem; color: hsl(var(--muted-foreground)); margin-top: 0.15rem; }
+    .sortable-header { cursor: pointer; user-select: none; }
+    .sortable-header:hover { color: hsl(var(--foreground)); }
+    .sort-icon { margin-left: 0.25rem; font-size: 0.7rem; }
+    .score-legend { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; font-size: 0.78rem; color: hsl(var(--muted-foreground)); }
+    .score-legend-item { display: flex; align-items: center; gap: 0.35rem; }
+    .score-legend-dot { width: 0.6rem; height: 0.6rem; border-radius: 9999px; }
+    @media (max-width: 640px) { .flower-grid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; } .flower-card { padding: 0.5rem; } .flower-card .flower-name { font-size: 0.8rem; } .toolbar { flex-direction: column; } .search-box { min-width: 100%; } }
+    .empty-state { text-align: center; padding: 3rem 1rem; color: hsl(var(--muted-foreground)); }
+    .empty-state svg { width: 3rem; height: 3rem; margin: 0 auto 1rem; opacity: 0.4; }
+    .empty-state p { font-size: 0.95rem; }
+    .app-footer { text-align: center; padding: 2rem 1rem; font-size: 0.8rem; color: hsl(var(--muted-foreground)); border-top: 1px solid hsl(var(--border)); margin-top: 2rem; }
+    .sort-select { padding: 0.4rem 0.7rem; border: 1px solid hsl(var(--input)); border-radius: var(--radius); background: hsl(var(--card)); color: hsl(var(--foreground)); font-size: 0.85rem; outline: none; cursor: pointer; }
+    .sort-select:focus { border-color: hsl(var(--ring)); }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 1rem; animation: fadeIn 0.15s ease; }
+    .modal { background: hsl(var(--card)); border-radius: var(--radius); max-width: 32rem; width: 100%; max-height: 85vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); animation: scaleIn 0.15s ease; }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem 0.75rem; border-bottom: 1px solid hsl(var(--border)); }
+    .modal-header h2 { font-size: 1.1rem; font-weight: 700; }
+    .modal-close { border: none; background: none; cursor: pointer; color: hsl(var(--muted-foreground)); padding: 0.25rem; border-radius: 0.25rem; }
+    .modal-close:hover { color: hsl(var(--foreground)); }
+    .modal-body { padding: 1.25rem; }
+    .modal-body .flower-detail-img { width: 8rem; height: 8rem; border-radius: var(--radius); background: hsl(var(--muted)); margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .modal-body .flower-detail-img img { width: 100%; height: 100%; object-fit: cover; }
+    .modal-body .detail-name { text-align: center; font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem; }
+    .detail-info { display: grid; grid-template-columns: auto 1fr; gap: 0.5rem 1rem; font-size: 0.9rem; }
+    .detail-info .label { color: hsl(var(--muted-foreground)); }
+    .detail-info .value { font-weight: 500; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    .bg-glow { position: fixed; pointer-events: none; z-index: -1; }
+    .bg-glow-1 { top: -20%; left: -10%; width: 60%; height: 60%; background: radial-gradient(ellipse, hsl(142 64% 24% / 0.08), transparent 60%); }
+    .bg-glow-2 { bottom: -10%; right: -10%; width: 50%; height: 50%; background: radial-gradient(ellipse, hsl(48 96% 47% / 0.06), transparent 60%); }
+  </style>
+</head>
+<body>
+    <!-- 背景点缀 -->
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <!-- 登录页面 -->
+  <div id="authPage" class="auth-page">
+    <div class="auth-card">
+      <h1>花园世界 · 公会花册</h1>
+      <p class="subtitle">公会成员花卉协作平台</p>
+      
+      <div id="authError" class="auth-error" style="display: none;"></div>
+      
+      <div id="loginForm">
+        <div class="form-group">
+          <label>用户名</label>
+          <input type="text" id="loginUsername" placeholder="输入你的游戏ID或昵称" />
+        </div>
+        <div class="form-group">
+          <label>公会密码</label>
+          <input type="password" id="loginPassword" placeholder="输入公会密码" />
+        </div>
+        <button class="btn btn-primary" onclick="login()" style="width: 100%;">登录</button>
+        <p style="text-align: center; margin-top: 1rem; font-size: 0.8rem; color: hsl(var(--muted-foreground));">
+          还没有账号？<a href="#" onclick="showRegister()" style="color: hsl(var(--primary)); text-decoration: none;">立即注册</a>
+        </p>
+      </div>
+
+      <div id="registerForm" style="display: none;">
+        <div class="form-group">
+          <label>用户名</label>
+          <input type="text" id="regUsername" placeholder="输入你的游戏ID或昵称" />
+        </div>
+        <div class="form-group">
+          <label>公会密码</label>
+          <input type="password" id="regPassword" placeholder="设置密码（6位以上）" />
+        </div>
+        <div class="form-group">
+          <label>确认密码</label>
+          <input type="password" id="regPasswordConfirm" placeholder="再次输入密码" />
+        </div>
+        <button class="btn btn-primary" onclick="register()" style="width: 100%;">注册</button>
+        <p style="text-align: center; margin-top: 1rem; font-size: 0.8rem; color: hsl(var(--muted-foreground));">
+          已有账号？<a href="#" onclick="showLogin()" style="color: hsl(var(--primary)); text-decoration: none;">返回登录</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 主应用 -->
+  <div id="app" style="display: none;">
+    <!-- 顶部导航 -->
+    <header class="app-header">
+      <div class="app-header-inner">
+        <div class="app-logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5a3 3 0 1 1 3 3m-3-3a3 3 0 1 0-3 3m3-3v1M9 8a3 3 0 1 0 3 3M9 8h1m5 0a3 3 0 1 1-3 3m3-3h-1m-2 3v-1" />
+            <circle cx="12" cy="8" r="2" />
+            <path d="M12 10v12" />
+            <path d="M12 22c4.2 0 7-1.667 7-5-4.2 0-7 1.667-7 5Z" />
+            <path d="M12 22c-4.2 0-7-1.667-7-5 4.2 0 7 1.667 7 5Z" />
+          </svg>
+          <span>花园世界 · 公会花册</span>
+        </div>
+        <nav class="app-nav">
+          <a href="#" onclick="showPage('home')" class="active" id="navHome">花册</a>
+          <a href="#" onclick="showPage('members')" id="navMembers">成员</a>
+          <a href="#" onclick="showPage('tasks')" id="navTasks">任务</a>
+          <a href="#" onclick="showPage('stats')" id="navStats">统计</a>
+        </nav>
+        <div class="user-section">
+          <span class="user-name" id="userName">访客</span>
+          <div class="user-avatar" id="userAvatar">?</div>
+          <button class="btn btn-ghost btn-sm" onclick="logout()">退出</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 主内容 -->
+    <main class="main-content" id="mainContent">
+      <!-- 内容将通过JavaScript动态加载 -->
+    </main>
+  </div>
+</body>
+<script>
+// ===== 花卉数据 =====
+const FLOWERS = [
+  {
+    "id": "桃夭美人蕉",
+    "name": "桃夭美人蕉",
+    "primary_channel": "花灵",
+    "sources": [{"detail": "花灵", "channel": "花灵"}],
+    "grow_time": null,
+    "competition_score": 23,
+    "currency": null,
+    "price": null,
+    "order_exp": null,
+    "order_price": null,
+    "materials": null,
+    "vase": null,
+    "image_url": "/flower-images/桃夭美人蕉.webp",
+    "is_custom": false
+  },
+  {
+    "id": "玉白梨花",
+    "name": "玉白梨花",
+    "primary_channel": "活动鲜花",
+    "sources": [{"detail": "(花漾春山)", "channel": "活动鲜花"}],
+    "grow_time": null,
+    "competition_score": 14,
+    "currency": null,
+    "price": null,
+    "order_exp": null,
+    "order_price": null,
+    "materials": null,
+    "vase": null,
+    "image_url": "/flower-images/玉白梨花.webp",
+    "is_custom": false
+  },
+  {
+    "id": "珊粉立金花",
+    "name": "珊粉立金花",
+    "primary_channel": "礼包花圃",
+    "sources": [{"detail": "礼包花圃", "channel": "礼包花圃"}],
+    "grow_time": null,
+    "competition_score": 23,
+    "currency": "人民币",
+    "price": 3.8,
+    "order_exp": null,
+    "order_price": null,
+    "materials": null,
+    "vase": null,
+    "image_url": "/flower-images/珊粉立金花.webp",
+    "is_custom": false
+  },
+  {
+    "id": "素雪瑞香花",
+    "name": "素雪瑞香花",
+    "primary_channel": "礼包花圃",
+    "sources": [{"detail": "礼包花圃", "channel": "礼包花圃"}],
+    "grow_time": null,
+    "competition_score": 23,
+    "currency": "人民币",
+    "price": 3.8,
+    "order_exp": null,
+    "order_price": null,
+    "materials": null,
+    "vase": null,
+    "image_url": "/flower-images/素雪瑞香花.webp",
+    "is_custom": false
+  },
+  {
+    "id": "纯白木香花",
+    "name": "纯白木香花",
+    "primary_channel": "礼包花圃",
+    "sources": [{"detail": "礼包花圃", "channel": "礼包花圃"}],
+    "grow_time": null,
+    "competition_score": 23,
+    "currency": "人民币",
+    "price": 3.8,
+    "order_exp": null,
+    "order_price": null,
+    "materials": null,
+    "vase": null,
+    "image_url": "/flower-images/纯白木香花.webp",
+    "is_custom": false
+  },
+  {
+    "id": "荷月·池光夏梦",
+    "name": "荷月·池光夏梦",
+    "primary_channel": "花灵",
+    "sources": [{"detail": "花灵", "channel": "花灵"}],
+    "grow_time": null,
+    "competition_score": 28,
+    "currency": null,
+    "price": null,
+    "order_exp": null,
+    "order_price": null,
+    "materials": null,
+    "vase": null,
+    "image_url": "/flower-images/荷月·池光夏梦.webp",
+    "is_custom": false
+  },
+  {
+    "id": "香水百合",
+    "name": "香水百合",
+    "primary_channel": "花坊",
+    "sources": [{"detail": "花坊", "channel": "花坊"}],
+    "grow_time": null,
+    "competition_score": 14,
+    "currency": null,
+    "price": null,
+    "order_exp": null,
+    "order_price": null,
+    "materials": null,
+    "vase": null,
+    "image_url": "/flower-images/香水百合.webp",
+    "is_custom": false
+  },
+  {
+    "id": "粉云溲疏花",
+    "name": "粉云溲疏花",
+    "primary_channel": "花灵",
+    "sources": [{"detail": "花灵", "channel": "花灵"}],
+    "grow_time": null,
+    "competition_score": 23,
+    "currency": null,
+    "price": null,
+    "order_exp": null,
+    "order_price": null,
+    "materials": null,
+    "vase": null,
+    "image_url": "/flower-images/粉云溲疏花.webp",
+    "is_custom": false
+  },
+  {
+    "id": "曼陀罗华",
+    "name": "曼陀罗华",
+    "primary_channel": "花坊",
+    "sources": [{"detail": "花坊", "channel": "花坊"}],
+    "grow_time": null,
+    "competition_score": 21,
+    "currency": null,
+    "price": null,
+    "order_exp": null,
+    "order_price": null,
+    "materials": null,
+    "vase": null,
+    "image_url": "/flower-images/曼陀罗华.webp",
+    "is_custom": false
+  },
+  {
+    "id": "云白垂丝茉莉",
+    "name": "云白垂丝茉莉",
+    "primary_channel": "礼包花圃",
+    "sources": [{"detail": "礼包花圃", "channel": "礼包花圃"}],
+    "grow_time": null,
+    "competition_score": 23,
+    "currency": "人民币",
+    "price": 3.8,
+    "order_exp": null,
+    "order_price": null,
+    "materials": null,
+    "vase": null,
+    "image_url": "/flower-images/云白垂丝茉莉.webp",
+    "is_custom": false
+  },
+  {
+    "id": "轻紫大花葱",
+    "name": "轻紫大花葱",
+    "primary_channel": "花坊",
+    "sources": [{"detail": "花坊", "channel": "花坊"}],
+    "grow_time": null,
+    "competition_score": 14,
+    "currency": null,
+    "price": null,
+    "order_exp": null,
+    "order_price": null,
+    "materials": null,
+    "vase": null,
+    "image_url": "/flower-images/轻紫大花葱.webp",
+    "is_custom": false
+  },
+  {
+    "id": "蓝叶苏铁",
+    "name": "蓝叶苏铁",
+    "primary_channel": "花坊",
+    "sources": [{"detail": "花坊", "channel": "花坊"}],
+    "grow_time": null,
+    "competition_score": 14,
+    "currency": null,
+    "price": null,
+    "order_exp": null,
+    "order_price": null,
+    "materials": null,
+    "vase": null,
+    "image_url": "/flower-images/蓝叶苏铁.webp",
+    "is_custom": false
+  },
+  {
+    "id": "粉鹤芋",
+    "name": "粉鹤芋",
+    "primary_channel": "花坊",
+    "sources": [{"detail": "花坊", "channel": "花坊"}],
+    "grow_time": null,
+    "competition_score": 14,
+    "currency": null,
+    "price": null,
+    "order_exp": null,
+    "order_price": null,
+    "materials": null,
+    "vase": null,
+    "image_url": "/flower-images/粉鹤芋.webp",
+    "is_custom": false
+  },
+  {
+    "id": "绀紫飞燕草",
+    "name": "绀紫飞燕草",
+    "primary_channel": "花坊",
+    "sources": [{"detail": "花坊", "channel": "花坊"}],
+    "grow_time": null,
+    "competition_score": 14,
+    "currency": null,
+    "price": null,
+    "order_exp": null,
+    "order_price": null,
+    "materials": null,
+    "vase": null,
+    "image_url": "/flower-images/绀紫飞燕草.webp",
+    "is_custom": false
+  },
+  {
+    "id": "蜜合月见草",
+    "name": "蜜合月见草",
+    "primary_channel": "花坊",
+    "sources": [{"detail": "花坊", "channel": "花坊"}],
+    "grow_time": null,
+    "competition_score": 14,
+    "currency": null,
+    "price": null,
+    "order_exp": null,
+    "order_price": null,
+    "materials": null,
+    "vase": null,
+    "image_url": "/flower-images/蜜合月见草.webp",
+    "is_custom": false
+  },
+  {
+    "id": "粉彩山茶花",
+    "name": "粉彩山茶花",
+    "primary_channel": "花坊",
+    "sources": [{"detail": "花坊", "channel": "花坊"}],
+    "grow_time": null,
+    "competition_score": 14,
+    "currency": null,
+    "price": null,
+    "order_exp": null,
+    "order_price": null,
+    "materials": null,
+    "vase": null,
+    "image_url": "/flower-images/粉彩山茶花.webp",
+    "is_custom": false
+  },
+  {
+    "id": "蜜香金雀花",
+    "name": "蜜香金雀花",
+    "primary_channel": "花坊",
+    "sources": [{"detail": "花坊", "channel": "花坊"}],
+    "grow_time": null,
+    "competition_score": 14,
+    "currency": null,
+    "price": null,
+    "order_exp": null,
+    "order_price": null,
+    "materials": null,
+    "vase": null,
+    "image_url": "/flower-images/蜜香金雀花.webp",
+    "is_custom": false
+  },
+  {
+    "id": "白鹤芋",
+    "name": "白鹤芋",
+    "primary_channel": "花坊",
+    "sources": [{"detail": "花坊", "channel": "花坊"}],
+    "grow_time": null,
+    "competition_score": 14,
+    "currency": null,
+    "price": null,
+    "order_exp": null,
+    "order_price": null,
+    "materials": null,
+    "vase": null,
+    "image_url": "/flower-images/白鹤芋.webp",
+    "is_custom": false
+  },
+  {
+    "id": "琼花",
+    "name": "琼花",
+    "primary_channel": "花坊",
+    "sources": [{"detail": "花坊", "channel": "花坊"}],
+    "grow_time": null,
+    "competition_score": 14,
+    "currency": null,
+    "price": null,
+    "order_exp": null,
+    "order_price": null,
+    "materials": null,
+    "vase": null,
+    "image_url": "/flower-images/琼花.webp",
+    "is_custom": false
+  },
+  {
+    "id": "朱顶红",
+    "name": "朱顶红",
+    "primary_channel": "花坊",
+    "sources": [{"detail": "花坊", "channel": "花坊"}],
+    "grow_time": null,
+    "competition_score": 14,
+    "currency": null,
+    "price": null,
+    "order_exp": null,
+    "order_price": null,
+    "materials": null,
+    "vase": null,
+    "image_url": "/flower-images/朱顶红.webp",
+    "is_custom": false
+  }
+];
+
+// ===== 剩余443条数据已省略 =====
+  // ===== 应用状态 =====
+let currentUser = null;
+let currentView = 'grid';
+let activeChannels = new Set();
+let activePage = 'home';
+
+// ===== Supabase 配置 =====
+const SUPABASE_URL = 'https://your-project.supabase.co';
+const SUPABASE_ANON_KEY = 'your-anon-key-here';
+
+// ===== 初始化应用 =====
+document.addEventListener('DOMContentLoaded', () => {
+  checkAuth();
+});
+
+// ===== 认证相关 =====
+function checkAuth() {
+  const token = localStorage.getItem('guild_token');
+  if (token) {
+    currentUser = JSON.parse(localStorage.getItem('guild_user'));
+    showApp();
+  } else {
+    showAuth();
+  }
+}
+
+function showAuth() {
+  document.getElementById('authPage').style.display = 'block';
+  document.getElementById('app').style.display = 'none';
+}
+
+function showApp() {
+  document.getElementById('authPage').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('userName').textContent = currentUser.username;
+  document.getElementById('userAvatar').textContent = currentUser.username[0].toUpperCase();
+  showPage('home');
+}
+
+async function login() {
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  
+  if (!username || !password) {
+    showError('请输入用户名和密码');
+    return;
+  }
+  
+  try {
+    // 这里应该连接真实的 Supabase
+    // const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    
+    // 模拟登录（实际使用时替换为真实的 Supabase 调用）
+    const userData = { username, id: Date.now() };
+    currentUser = userData;
+    localStorage.setItem('guild_token', 'mock_token');
+    localStorage.setItem('guild_user', JSON.stringify(userData));
+    
+    showApp();
+  } catch (error) {
+    showError('登录失败：' + error.message);
+  }
+}
+
+async function register() {
+  const username = document.getElementById('regUsername').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const confirm = document.getElementById('regPasswordConfirm').value;
+  
+  if (!username || !password) {
+    showError('请填写完整信息');
+    return;
+  }
+  
+  if (password !== confirm) {
+    showError('两次输入的密码不一致');
+    return;
+  }
+  
+  if (password.length < 6) {
+    showError('密码至少6位');
+    return;
+  }
+  
+  try {
+    // 这里应该连接真实的 Supabase 注册
+    // const { data, error } = await supabase.auth.signUp({ email, password })
+    
+    // 模拟注册（实际使用时替换为真实的 Supabase 调用）
+    const userData = { username, id: Date.now() };
+    currentUser = userData;
+    localStorage.setItem('guild_token', 'mock_token');
+    localStorage.setItem('guild_user', JSON.stringify(userData));
+    
+    showApp();
+  } catch (error) {
+    showError('注册失败：' + error.message);
+  }
+}
+
+function logout() {
+  localStorage.removeItem('guild_token');
+  localStorage.removeItem('guild_user');
+  currentUser = null;
+  showAuth();
+}
+
+function showLogin() {
+  document.getElementById('loginForm').style.display = 'block';
+  document.getElementById('registerForm').style.display = 'none';
+}
+
+function showRegister() {
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('registerForm').style.display = 'block';
+}
+
+function showError(message) {
+  const errorDiv = document.getElementById('authError');
+  errorDiv.textContent = message;
+  errorDiv.style.display = 'block';
+  setTimeout(() => {
+    errorDiv.style.display = 'none';
+  }, 3000);
+}
+
+// ===== 页面导航 =====
+function showPage(page) {
+  activePage = page;
+  
+  // 更新导航状态
+  document.querySelectorAll('.app-nav a').forEach(link => {
+    link.classList.remove('active');
+  });
+  document.getElementById('nav' + page.charAt(0).toUpperCase() + page.slice(1)).classList.add('active');
+  
+  // 加载页面内容
+  const mainContent = document.getElementById('mainContent');
+  
+  switch(page) {
+    case 'home':
+      loadHomePage();
+      break;
+    case 'members':
+      loadMembersPage();
+      break;
+    case 'tasks':
+      loadTasksPage();
+      break;
+    case 'stats':
+      loadStatsPage();
+      break;
+  }
+}
+
+// ===== 首页 =====
+function loadHomePage() {
+  mainContent.innerHTML = `
+    <div class="page-header">
+      <h1>花册</h1>
+      <div class="toolbar">
+        <div class="search-box">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+          </svg>
+          <input type="text" id="searchInput" placeholder="搜索花卉名称..." oninput="applyFilters()" />
+        </div>
+        <select class="sort-select" id="sortSelect" onchange="applyFilters()">
+          <option value="default">默认排序</option>
+          <option value="name">按名称 A-Z</option>
+          <option value="name-desc">按名称 Z-A</option>
+          <option value="score-desc">竞赛分 高→低</option>
+          <option value="score-asc">竞赛分 低→高</option>
+        </select>
+        <div class="view-toggle">
+          <button id="gridViewBtn" class="active" onclick="setView('grid')" title="网格视图">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          </button>
+          <button id="listViewBtn" onclick="setView('list')" title="列表视图">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="channel-filters" id="channelFilters"></div>
+      <div class="filter-stats">显示 <strong id="shownCount">463</strong> / 463 种花卉</div>
+    </div>
+    <div id="flowerContainer"></div>
+  `;
+  
+  initChannelFilters();
+  applyFilters();
+}
+
+// ===== 成员页面 =====
+function loadMembersPage() {
+  mainContent.innerHTML = `
+    <div class="page-header">
+      <h1>成员列表</h1>
+      <div class="members-grid" id="membersGrid">
+        <div class="member-card">
+          <div class="member-avatar">南</div>
+          <div class="member-name">南宫晚莳</div>
+          <div class="member-status">在线</div>
+          <div class="member-stats">已拥有: 156/463</div>
+        </div>
+        <div class="member-card">
+          <div class="member-avatar">团</div>
+          <div class="member-name">团团</div>
+          <div class="member-status">在线</div>
+          <div class="member-stats">已拥有: 89/463</div>
+        </div>
+        <!-- 更多成员将通过 Supabase 数据加载 -->
+      </div>
+    </div>
+  `;
+}
+
+// ===== 任务页面 =====
+function loadTasksPage() {
+  mainContent.innerHTML = `
+    <div class="page-header">
+      <h1>竞赛任务</h1>
+      <div class="tasks-container">
+        <div class="task-card">
+          <h3>收集高竞赛分花卉</h3>
+          <p>收集竞赛分 ≥ 23 的花卉</p>
+          <div class="task-progress">
+            <div class="task-bar">
+              <div class="task-fill" style="width: 45%"></div>
+            </div>
+            <span>45% (105/233)</span>
+          </div>
+          <div class="task-members">
+            <span>参与成员: 南宫晚莳, 团团, 3人</span>
+          </div>
+        </div>
+        <div class="task-card">
+          <h3>完成花坊收集</h3>
+          <p>收集所有花坊花卉</p>
+          <div class="task-progress">
+            <div class="task-bar">
+              <div class="task-fill" style="width: 78%"></div>
+            </div>
+            <span>78% (31/40)</span>
+          </div>
+          <div class="task-members">
+            <span>参与成员: 南宫晚莳, 团团</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ===== 统计页面 =====
+function loadStatsPage() {
+  mainContent.innerHTML = `
+    <div class="page-header">
+      <h1>统计总览</h1>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number">463</div>
+          <div class="stat-label">总花卉数</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">156</div>
+          <div class="stat-label">公会已拥有</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">33.7%</div>
+          <div class="stat-label">完成率</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">5</div>
+          <div class="stat-label">在线成员</div>
+        </div>
+      </div>
+      <div class="stats-details">
+        <h3>渠道分布</h3>
+        <div class="channel-stats">
+          <div class="channel-stat">
+            <span>花灵: 45/156</span>
+          </div>
+          <div class="channel-stat">
+            <span>花坊: 31/156</span>
+          </div>
+          <div class="channel-stat">
+            <span>礼包花圃: 28/156</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ===== 花卉操作相关 =====
+function getChannels() {
+  const chs = new Set();
+  FLOWERS.forEach(f => {
+    if (f.primary_channel) chs.add(f.primary_channel);
+  });
+  return Array.from(chs).sort();
+}
+
+function initChannelFilters() {
+  const container = document.getElementById('channelFilters');
+  const channels = getChannels();
+  const allBtn = document.createElement('button');
+  allBtn.className = 'channel-btn all-btn active';
+  allBtn.textContent = '全部';
+  allBtn.dataset.channel = '__all__';
+  allBtn.onclick = () => toggleChannel('__all__');
+  container.appendChild(allBtn);
+  channels.forEach(ch => {
+    const btn = document.createElement('button');
+    btn.className = 'channel-btn';
+    btn.textContent = ch;
+    btn.dataset.channel = ch;
+    btn.onclick = () => toggleChannel(ch);
+    container.appendChild(btn);
+  });
+}
+
+function toggleChannel(ch) {
+  const allBtn = document.querySelector('[data-channel="__all__"]');
+  if (ch === '__all__') {
+    activeChannels.clear();
+    allBtn.classList.add('active');
+    document.querySelectorAll('.channel-btn:not([data-channel="__all__"])').forEach(b => b.classList.remove('active'));
+  } else {
+    if (activeChannels.has(ch)) activeChannels.delete(ch);
+    else activeChannels.add(ch);
+    if (activeChannels.size === 0) {
+      allBtn.classList.add('active');
+    } else {
+      allBtn.classList.remove('active');
+    }
+    document.querySelectorAll('.channel-btn:not([data-channel="__all__"])').forEach(b => {
+      b.classList.toggle('active', activeChannels.has(b.dataset.channel));
+    });
+  }
+  applyFilters();
+}
+
+function getScoreLevel(score) {
+  if (score === null || score === undefined) return 'score-low';
+  if (score <= 15) return 'score-low';
+  if (score <= 22) return 'score-mid';
+  return 'score-high';
+}
+
+function getFilteredFlowers() {
+  const query = document.getElementById('searchInput').value.trim().toLowerCase();
+  const sort = document.getElementById('sortSelect').value;
+
+  let filtered = FLOWERS.filter(f => {
+    if (activeChannels.size > 0 && !activeChannels.has(f.primary_channel)) return false;
+    if (query && !f.name.toLowerCase().includes(query)) return false;
+    return true;
+  });
+
+  const sorted = [...filtered];
+  switch (sort) {
+    case 'name': sorted.sort((a, b) => a.name.localeCompare(b.name, 'zh')); break;
+    case 'name-desc': sorted.sort((a, b) => b.name.localeCompare(a.name, 'zh')); break;
+    case 'score-desc': sorted.sort((a, b) => (b.competition_score || 0) - (a.competition_score || 0)); break;
+    case 'score-asc': sorted.sort((a, b) => (a.competition_score || 0) - (b.competition_score || 0)); break;
+    default: break;
+  }
+  return sorted;
+}
+
+function renderGrid(flowers) {
+  const container = document.getElementById('flowerContainer');
+  if (flowers.length === 0) {
+    container.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg><p>没有找到匹配的花卉</p></div>';
+    return;
+  }
+  container.innerHTML = '<div class="flower-grid" id="flowerGrid"></div>';
+  const grid = document.getElementById('flowerGrid');
+  flowers.forEach(f => {
+    const card = document.createElement('div');
+    card.className = 'flower-card';
+    card.onclick = () => openDetail(f);
+
+    const scoreLevel = getScoreLevel(f.competition_score);
+    const IMG_BASE = 'https://flowerbook.my';
+    const imgPath = f.image_url ? IMG_BASE + f.image_url : '';
+
+    card.innerHTML = `
+      <div class="img-wrap">
+        ${imgPath ? `<img src="${imgPath}" alt="${f.name}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'flower-placeholder\\'>🌸</div>'">` : '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:2.5rem;opacity:0.35">🌸</div>'}
+      </div>
+      <div class="flower-name" title="${f.name}">${f.name}</div>
+      <div class="flower-meta">
+        <span class="channel-tag">${f.primary_channel || '未知'}</span>
+        <span class="score-badge ${scoreLevel}">🏆 ${f.competition_score ?? '-'}</span>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function renderList(flowers) {
+  const container = document.getElementById('flowerContainer');
+  if (flowers.length === 0) {
+    container.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg><p>没有找到匹配的花卉</p></div>';
+    return;
+  }
+  container.innerHTML = `
+    <div class="flower-table-wrap">
+      <table class="flower-table">
+        <thead>
+          <tr>
+            <th style="width:2.5rem"></th>
+            <th class="sortable-header" onclick="sortBy('name')">花卉名称 <span class="sort-icon">↕</span></th>
+            <th class="sortable-header" onclick="sortBy('channel')">获取渠道 <span class="sort-icon">↕</span></th>
+            <th>获取详情</th>
+            <th class="sortable-header" onclick="sortBy('score')">竞赛分 <span class="sort-icon">↕</span></th>
+            <th>价格</th>
+          </tr>
+        </thead>
+        <tbody id="flowerTableBody"></tbody>
+      </table>
+    </div>
+  `;
+  const tbody = document.getElementById('flowerTableBody');
+  flowers.forEach(f => {
+    const scoreLevel = getScoreLevel(f.competition_score);
+    const IMG_BASE = 'https://flowerbook.my';
+    const imgPath = f.image_url ? IMG_BASE + f.image_url : '';
+    const sources = f.sources || [];
+    const sourceDetails = sources.map(s => s.detail).filter(Boolean).join('、');
+    const priceStr = f.price ? `${f.price}${f.currency || ''}` : '-';
+
+    const tr = document.createElement('tr');
+    tr.style.cursor = 'pointer';
+    tr.onclick = () => openDetail(f);
+    tr.innerHTML = `
+      <td class="img-cell">
+        <div class="img-wrap-sm">
+          ${imgPath ? `<img src="${imgPath}" alt="${f.name}" loading="lazy" onerror="this.parentElement.innerHTML='<span class=img-placeholder-sm>🌸</span>'">` : '<span class="img-placeholder-sm">🌸</span>'}
+        </div>
+      </td>
+      <td class="name-cell">${f.name}</td>
+      <td><span class="channel-tag">${f.primary_channel || '未知'}</span></td>
+      <td><span class="source-detail">${sourceDetails || '-'}</span></td>
+      <td><span class="score-badge ${scoreLevel}">🏆 ${f.competition_score ?? '-'}</span></td>
+      <td style="font-size:0.85rem;color:hsl(var(--muted-foreground))">${priceStr}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function setView(view) {
+  currentView = view;
+  document.getElementById('gridViewBtn').classList.toggle('active', view === 'grid');
+  document.getElementById('listViewBtn').classList.toggle('active', view === 'list');
+  applyFilters();
+}
+
+function applyFilters() {
+  const filtered = getFilteredFlowers();
+  document.getElementById('shownCount').textContent = filtered.length;
+  if (currentView === 'grid') renderGrid(filtered);
+  else renderList(filtered);
+}
+
+function sortBy(field) {
+  const sel = document.getElementById('sortSelect');
+  if (field === 'name') {
+    if (!sortCycle.name || sortCycle.name === 'desc') { sel.value = 'name'; sortCycle.name = 'asc'; }
+    else { sel.value = 'name-desc'; sortCycle.name = 'desc'; }
+  } else if (field === 'score') {
+    if (!sortCycle.score || sortCycle.score === 'asc') { sel.value = 'score-desc'; sortCycle.score = 'desc'; }
+    else { sel.value = 'score-asc'; sortCycle.score = 'asc'; }
+  } else if (field === 'channel') {
+    sel.value = 'default';
+  }
+  applyFilters();
+}
+
+function openDetail(f) {
+  document.getElementById('detailModal').style.display = 'flex';
+  document.getElementById('modalTitle').textContent = f.name;
+
+  const sources = f.sources || [];
+  const sourceStr = sources.map(s => `${s.channel}${s.detail && s.detail !== s.channel ? '：' + s.detail : ''}`).join('、') || '无';
+  const scoreLevel = getScoreLevel(f.competition_score);
+  const priceStr = f.price ? `${f.price}${f.currency || ''}` : '-';
+  const growTimeStr = f.grow_time || '未记录';
+  const IMG_BASE = 'https://flowerbook.my';
+  const imgPath = f.image_url ? IMG_BASE + f.image_url : '';
+
+  document.getElementById('modalBody').innerHTML = `
+    <div class="flower-detail-img">
+      ${imgPath ? `<img src="${imgPath}" alt="${f.name}" onerror="this.outerHTML='<span style=font-size:3rem;opacity:0.35>🌸</span>'">` : '<span style="font-size:3rem;opacity:0.35">🌸</span>'}
+    </div>
+    <div class="detail-name">${f.name}</div>
+    <div class="detail-info">
+      <span class="label">获取渠道</span>
+      <span class="value">${f.primary_channel || '未知'}</span>
+      <span class="label">获取详情</span>
+      <span class="value">${sourceStr}</span>
+      <span class="label">竞赛分</span>
+      <span class="value"><span class="score-badge ${scoreLevel}">🏆 ${f.competition_score ?? '-'}</span></span>
+      <span class="label">12级种植时间</span>
+      <span class="value">${growTimeStr}</span>
+      <span class="label">价格</span>
+      <span class="value">${priceStr}</span>
+      <span class="label">花瓶</span>
+      <span class="value">${f.vase || '通用'}</span>
+      ${f.materials ? `<span class="label">所需材料</span><span class="value">${f.materials}</span>` : ''}
+    </div>
+  `;
+}
+
+function closeModal(e) {
+  if (e && e.target !== e.currentTarget) return;
+  document.getElementById('detailModal').style.display = 'none';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('detailModal').style.display = 'none';
+});
+
+// ===== 添加更多样式 =====
+const additionalStyles = `
+  .auth-page { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: hsl(var(--background)); }
+  .auth-card { background: hsl(var(--card)); border-radius: var(--radius); padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-width: 400px; width: 100%; }
+  .auth-page h1 { text-align: center; margin-bottom: 0.5rem; color: hsl(var(--primary)); }
+  .subtitle { text-align: center; color: hsl(var(--muted-foreground)); margin-bottom: 2rem; }
+  .form-group { margin-bottom: 1rem; }
+  .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+  .form-group input { width: 100%; padding: 0.75rem; border: 1px solid hsl(var(--input)); border-radius: var(--radius); background: hsl(var(--card)); color: hsl(var(--foreground)); font-size: 1rem; outline: none; }
+  .form-group input:focus { border-color: hsl(var(--ring)); box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2); }
+  .btn { padding: 0.75rem 1.5rem; border: none; border-radius: var(--radius); font-weight: 600; cursor: pointer; transition: all 0.15s; text-decoration: none; display: inline-block; text-align: center; }
+  .btn-primary { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+  .btn-primary:hover { background: hsl(var(--primary) / 0.9); }
+  .btn-ghost { background: transparent; color: hsl(var(--foreground)); border: 1px solid hsl(var(--border)); }
+  .btn-ghost:hover { background: hsl(var(--secondary)); }
+  .btn-sm { padding: 0.5rem 1rem; font-size: 0.875rem; }
+  .app-nav { display: flex; gap: 1rem; align-items: center; }
+  .app-nav a { padding: 0.5rem 1rem; border-radius: var(--radius); text-decoration: none; color: hsl(var(--muted-foreground)); transition: all 0.15s; }
+  .app-nav a:hover { background: hsl(var(--secondary)); }
+  .app-nav a.active { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+  .user-section { display: flex; align-items: center; gap: 1rem; }
+  .user-name { font-weight: 600; }
+  .user-avatar { width: 2rem; height: 2rem; border-radius: 50%; background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); display: flex; align-items: center; justify-content: center; font-weight: 700; }
+  .page-header { margin-bottom: 2rem; }
+  .page-header h1 { margin-bottom: 1rem; }
+  .members-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; }
+  .member-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: var(--radius); padding: 1.5rem; text-align: center; }
+  .member-avatar { width: 3rem; height: 3rem; border-radius: 50%; background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.25rem; margin: 0 auto 1rem; }
+  .member-name { font-weight: 600; margin-bottom: 0.5rem; }
+  .member-status { color: hsl(var(--score-high)); font-size: 0.875rem; margin-bottom: 0.5rem; }
+  .member-stats { color: hsl(var(--muted-foreground)); font-size: 0.875rem; }
+  .tasks-container { display: grid; gap: 1rem; }
+  .task-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: var(--radius); padding: 1.5rem; }
+  .task-card h3 { margin-bottom: 0.5rem; }
+  .task-card p { color: hsl(var(--muted-foreground)); margin-bottom: 1rem; }
+  .task-progress { margin-bottom: 1rem; }
+  .task-bar { width: 100%; height: 0.5rem; background: hsl(var(--muted)); border-radius: 9999px; overflow: hidden; }
+  .task-fill { height: 100%; background: hsl(var(--primary)); transition: width 0.3s ease; }
+  .task-members { font-size: 0.875rem; color: hsl(var(--muted-foreground)); }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+  .stat-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: var(--radius); padding: 1.5rem; text-align: center; }
+  .stat-number { font-size: 2rem; font-weight: 700; color: hsl(var(--primary)); margin-bottom: 0.5rem; }
+  .stat-label { color: hsl(var(--muted-foreground)); }
+  .stats-details { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: var(--radius); padding: 1.5rem; }
+  .stats-details h3 { margin-bottom: 1rem; }
+  .channel-stats { display: grid; gap: 0.5rem; }
+  .channel-stat { padding: 0.5rem; background: hsl(var(--secondary)); border-radius: 0.5rem; }
+`;
+const styleElement = document.createElement('style');
+styleElement.textContent = additionalStyles;
+document.head.appendChild(styleElement);
+
+// ===== 添加详情弹窗样式 =====
+const modalStyles = `
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 1rem; animation: fadeIn 0.15s ease; }
+  .modal { background: hsl(var(--card)); border-radius: var(--radius); max-width: 32rem; width: 100%; max-height: 85vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); animation: scaleIn 0.15s ease; }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem 0.75rem; border-bottom: 1px solid hsl(var(--border)); }
+  .modal-header h2 { font-size: 1.1rem; font-weight: 700; }
+  .modal-close { border: none; background: none; cursor: pointer; color: hsl(var(--muted-foreground)); padding: 0.25rem; border-radius: 0.25rem; }
+  .modal-close:hover { color: hsl(var(--foreground)); }
+  .modal-body { padding: 1.25rem; }
+  .modal-body .flower-detail-img { width: 8rem; height: 8rem; border-radius: var(--radius); background: hsl(var(--muted)); margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .modal-body .flower-detail-img img { width: 100%; height: 100%; object-fit: cover; }
+  .modal-body .detail-name { text-align: center; font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem; }
+  .detail-info { display: grid; grid-template-columns: auto 1fr; gap: 0.5rem 1rem; font-size: 0.9rem; }
+  .detail-info .label { color: hsl(var(--muted-foreground)); }
+  .detail-info .value { font-weight: 500; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+`;
+const modalStyleElement = document.createElement('style');
+modalStyleElement.textContent = modalStyles;
+document.head.appendChild(modalStyleElement);
+</script>
+</html>
