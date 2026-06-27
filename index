@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>花园世界 · 公会花册</title>
+<style>
+:root{--bg:#f8faf9;--fg:#0f172a;--card:#fff;--primary:#166534;--secondary:#f1f5f9;--muted:#e2e8f0;--muted-fg:#64748b;--accent:#ca8a04;--border:#e2e8f0;--radius:0.75rem}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--fg);line-height:1.5;min-height:100vh}
+button{font-family:inherit;cursor:pointer}
+.hdr{position:sticky;top:0;z-index:50;background:rgba(248,250,249,0.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.hdr-in{max-width:80rem;margin:0 auto;padding:0.5rem 1rem;display:flex;align-items:center;gap:0.5rem}
+.logo{display:flex;align-items:center;gap:0.4rem;font-weight:700;font-size:1rem;color:var(--primary)}
+.nav{display:flex;gap:0.15rem;margin-left:1rem}
+.nav a{padding:0.35rem 0.65rem;border-radius:var(--radius);font-size:0.85rem;font-weight:500;color:var(--muted-fg);cursor:pointer;transition:all 0.15s;text-decoration:none}
+.nav a:hover{background:var(--secondary);color:var(--fg)}
+.nav a.ac{background:rgba(22,101,52,0.1);color:var(--primary)}
+.usr{margin-left:auto;display:flex;align-items:center;gap:0.5rem}
+.uname{font-size:0.85rem;color:var(--muted-fg)}
+.uav{width:1.8rem;height:1.8rem;border-radius:9999px;background:rgba(22,101,52,0.15);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:600}
+.btn{display:inline-flex;align-items:center;gap:0.35rem;padding:0.4rem 0.85rem;border-radius:var(--radius);font-size:0.85rem;font-weight:500;border:1px solid transparent;transition:all 0.15s}
+.btn-p{background:var(--primary);color:#fff}.btn-p:hover{opacity:0.9}
+.btn-g{background:transparent;color:var(--muted-fg);border:none}
+.main{max-width:80rem;margin:0 auto;padding:1rem}
+@media(min-width:640px){.main{padding:1.5rem}}
+.auth-pg{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem;background:radial-gradient(ellipse 120% 80% at 50% -20%,rgba(22,101,52,0.12),transparent 55%)}
+.auth-cd{width:100%;max-width:24rem;background:var(--card);border-radius:calc(var(--radius)*2);border:1px solid var(--border);padding:2rem 1.75rem;box-shadow:0 25px 50px -12px rgba(0,0,0,0.1)}
+.auth-cd h1{text-align:center;font-size:1.5rem;font-weight:700;color:var(--primary);margin-bottom:0.25rem}
+.fg{margin-bottom:0.85rem}
+.fg label{display:block;font-size:0.82rem;font-weight:500;margin-bottom:0.3rem}
+.fg input{width:100%;padding:0.55rem 0.75rem;border:1px solid var(--border);border-radius:var(--radius);font-size:0.9rem;outline:none;background:var(--card);color:var(--fg)}
+.fg input:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(22,101,52,0.2)}
+.err{color:#dc2626;font-size:0.8rem;margin-bottom:0.5rem}
+.ph{margin-bottom:1rem}
+.ph h1{font-size:1.25rem;font-weight:700}
+.ph p{font-size:0.85rem;color:var(--muted-fg);margin-top:0.15rem}
+.tb{display:flex;flex-wrap:wrap;gap:0.75rem;margin-bottom:1rem;align-items:center}
+.sb{flex:1;min-width:200px;position:relative}
+.sb input{width:100%;padding:0.5rem 0.75rem 0.5rem 2.25rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);color:var(--fg);font-size:0.85rem;outline:none}
+.si{position:absolute;left:0.65rem;top:50%;transform:translateY(-50%);width:1rem;height:1rem;color:var(--muted-fg)}
+.ss{padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:var(--radius);font-size:0.82rem;background:var(--card);color:var(--fg)}
+.vt{display:flex;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.vt button{padding:0.4rem 0.65rem;border:none;background:var(--card);font-size:0.9rem}
+.vt button.ac{background:var(--primary);color:#fff}
+.cf{display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.75rem}
+.cb{padding:0.2rem 0.55rem;border-radius:9999px;font-size:0.75rem;border:1px solid var(--border);background:var(--card);color:var(--muted-fg);cursor:pointer}
+.cb.ac,.cb:hover{background:rgba(22,101,52,0.1);color:var(--primary);border-color:rgba(22,101,52,0.3)}
+.fs{font-size:0.8rem;color:var(--muted-fg);margin-bottom:0.5rem}
+.fgrd{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.75rem}
+@media(min-width:640px){.fgrd{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:1024px){.fgrd{grid-template-columns:repeat(6,1fr)}}
+.fcd{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:0.5rem;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.fcd:hover{box-shadow:0 4px 12px rgba(0,0,0,0.08)}
+.iw{width:100%;aspect-ratio:1;border-radius:var(--radius);background:var(--muted);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;margin-bottom:0.35rem}
+.iw img{width:100%;height:100%;object-fit:cover}
+.fn{font-size:0.8rem;font-weight:600;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:0.2rem}
+.ct{font-size:0.68rem;padding:0.08rem 0.35rem;border-radius:9999px;background:var(--secondary);color:var(--muted-fg)}
+.scb{font-size:0.7rem;font-weight:600}
+.sl{color:#64748b}.sm{color:#166534}.sh{color:#ca8a04}
+.st{display:inline-flex;align-items:center;gap:0.2rem;padding:0.15rem 0.5rem;border-radius:9999px;font-size:0.72rem;font-weight:600;border:1px solid;cursor:pointer}
+.s-ow{background:rgba(22,101,52,0.1);color:#166534;border-color:rgba(22,101,52,0.3)}
+.s-pl{background:rgba(202,138,4,0.15);color:#ca8a04;border-color:rgba(202,138,4,0.3)}
+.s-mi{background:rgba(226,232,240,0.5);color:#64748b;border-color:#e2e8f0}
+.tw{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--card)}
+.tbl{width:100%;border-collapse:collapse;font-size:0.82rem}
+.tbl th{text-align:left;padding:0.5rem 0.65rem;font-weight:600;font-size:0.75rem;color:var(--muted-fg);border-bottom:1px solid var(--border);background:var(--secondary)}
+.tbl td{padding:0.45rem 0.65rem;border-bottom:1px solid var(--border)}
+.tbl tr:hover td{background:rgba(241,245,249,0.4)}
+.mcd{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:0.75rem;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.mh{display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem}
+.mav{width:2.5rem;height:2.5rem;border-radius:9999px;background:rgba(22,101,52,0.12);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:700}
+.mpg{display:flex;align-items:center;gap:0.5rem}
+.mpg .bar{flex:1;height:0.4rem;background:var(--muted);border-radius:9999px;overflow:hidden}
+.mpg .bar .fill{height:100%;border-radius:9999px;background:linear-gradient(90deg,#166534,#ca8a04)}
+.act{display:flex;align-items:start;gap:0.75rem;padding:0.6rem 0;border-bottom:1px solid rgba(226,232,240,0.5)}
+.act:last-child{border-bottom:none}
+.aav{width:1.8rem;height:1.8rem;border-radius:9999px;background:rgba(22,101,52,0.1);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:0.68rem;font-weight:700;flex-shrink:0}
+.acn{flex:1;font-size:0.82rem}
+.atm{font-size:0.72rem;color:var(--muted-fg);white-space:nowrap}
+.mod{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;display:flex;align-items:center;justify-content:center;padding:1rem}
+.mod-in{background:var(--card);border-radius:var(--radius);max-width:32rem;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25)}
+.mod-h{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem 0.75rem;border-bottom:1px solid var(--border)}
+.mod-b{padding:1.25rem}
+.emp{text-align:center;padding:3rem 1rem;color:var(--muted-fg)}
+.load{text-align:center;padding:3rem;color:var(--muted-fg)}
+.mt2{margin-top:0.5rem}.mb2{margin-bottom:0.5rem}.tm{color:var(--muted-fg)}.ts{font-size:0.82rem}
+.ftr{text-align:center;padding:2rem 1rem;font-size:0.8rem;color:var(--muted-fg);border-top:1px solid var(--border);margin-top:2rem}
+.lgnd{display:flex;gap:1rem;margin-bottom:0.75rem;font-size:0.78rem;color:var(--muted-fg)}
+.ld{display:flex;align-items:center;gap:0.25rem}
+.ld-d{width:0.6rem;height:0.6rem;border-radius:9999px}
+@media(max-width:640px){.fgrd{grid-template-columns:repeat(2,1fr);gap:0.5rem}.tb{flex-direction:column}.sb{min-width:100%}}
+</style>
+</head>
+<body>
+<div id="authPage" class="auth-pg">
+<div class="auth-cd">
+<h1>🌸 花园世界</h1>
+<p style="text-align:center;font-size:0.85rem;color:var(--muted-fg);margin-bottom:1rem">公会花卉协作平台</p>
+<div id="authError" class="err"></div>
+<div class="fg"><label>你的昵称</label><input id="authNickname" placeholder="输入昵称进入花册" maxlength="20" onkeydown="if(event.key==='Enter')handleAuth()"/></div>
+<button class="btn btn-p" style="width:100%;justify-content:center" onclick="handleAuth()">进入花册 🌸</button>
+</div></div>
+
+<div id="app" style="display:none">
+<header class="hdr"><div class="hdr-in">
+<div class="logo">🌸<span>青枝漫野·花册</span></div>
+<nav class="nav"><a class="ac" onclick="sp('catalog')">🌸花册</a><a onclick="sp('members')">👥成员</a><a onclick="sp('activity')">📋日志</a></nav>
+<div class="usr"><span class="uname" id="ud"></span><div class="uav" id="ua">?</div><button class="btn btn-g ts" onclick="lo()">退出</button></div>
+</div></header>
+<main class="main">
+<div id="page-catalog" class="page">
+<div class="ph"><h1>🌸 花卉图鉴</h1><p id="catSub">收录 463 种花·点击标记</p></div>
+<div class="lgnd"><span class="ld"><span class="ld-d" style="background:#64748b"></span>低分≤15</span><span class="ld"><span class="ld-d" style="background:#166534"></span>中分16-22</span><span class="ld"><span class="ld-d" style="background:#ca8a04"></span>高分≥23</span></div>
+<div class="tb"><div class="sb"><svg class="si" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input id="si" placeholder="搜索花卉名称..." oninput="af()"/></div>
+<select class="ss" id="ss" onchange="af()"><option value="default">默认排序</option><option value="name">名称A-Z</option><option value="score-desc">竞赛分高→低</option><option value="score-asc">竞赛分低→高</option></select>
+<div class="vt"><button id="gv" class="ac" onclick="sv('grid')">⬜</button><button id="lv" onclick="sv('list')">☰</button></div></div>
+<div class="cf" id="cf"></div>
+<div class="fs">显示<strong id="sc">0</strong>种</div>
+<div id="fc"><div class="load">加载中...</div></div></div>
+<div id="page-members" class="page" style="display:none"><div class="ph"><h1>👥 成员总览</h1></div><div id="mc"><div class="load">加载中...</div></div></div>
+<div id="page-activity" class="page" style="display:none"><div class="ph"><h1>📋 活动日志</h1></div><div id="ac"><div class="load">加载中...</div></div></div>
+</main>
+<footer class="ftr">青枝漫野·公会花册</footer></div>
+
+<div id="dm" class="mod" style="display:none" onclick="if(event.target===this)cd()"><div class="mod-in"><div class="mod-h"><h2 id="mt">详情</h2><button class="btn" style="border:none;background:none;font-size:1.2rem;color:var(--muted-fg)" onclick="cd()">✕</button></div><div class="mod-b" id="mb"></div></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SU="https://kzvxcdoqoqteudkdzkfk.supabase.co",SK="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6dnhjZG9xb3F0ZXVka2R6a2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0ODkzNDYsImV4cCI6MjA5ODA2NTM0Nn0.I-kqzeRDFqCEjBfCfFZjfzCSbyOOpnbVzMCd1ZBz6HU",IMG='https://flowerbook.my';
+let sb,FL=[],PR=null,OW={},CV='grid',AC=new Set;
+try{sb=window.supabase.createClient(SU,SK)}catch(e){console.warn('Supabase init:',e)}
+function gs(s){if(!s)return'sl';if(s<=15)return'sl';if(s<=22)return'sm';return'sh'}
+
+async function handleAuth(){
+const n=document.getElementById('authNickname').value.trim(),e=document.getElementById('authError');e.textContent='';
+if(!n){e.textContent='请输入昵称';return}
+PR={nickname:n};
+if(sb){try{let{data}=await sb.from('profiles').select('*').eq('nickname',n);
+if(!data||!data.length){const{data:nd,error}=await sb.from('profiles').insert([{nickname:n}]).select();if(error)throw error;PR=nd[0]}
+else PR=data[0]}catch(er){console.warn('Auth fallback:',er.message)}}
+localStorage.setItem('fbp',JSON.stringify(PR));init()}
+
+function lo(){localStorage.removeItem('fbp');location.reload()}
+
+async function init(){
+document.getElementById('authPage').style.display='none';document.getElementById('app').style.display='block';
+document.getElementById('ud').textContent=PR.nickname;document.getElementById('ua').textContent=PR.nickname[0];
+if(sb){try{const{data}=await sb.from('flowers').select('*').order('competition_score',{ascending:false});FL=data||[]}catch(e){FL=[]}}
+if(!FL.length){try{const r=await fetch('flowers_data.json');FL=await r.json()}catch(e){}}
+document.getElementById('catSub').textContent='收录 '+FL.length+' 种花·点击标记';
+if(sb){try{const{data}=await sb.from('flower_ownership').select('*').eq('profile_user',PR.nickname);data.forEach(o=>{OW[o.flower_id]=o.status})}catch(e){}}
+const l=localStorage.getItem('fbo_'+PR.nickname);if(l)Object.assign(OW,JSON.parse(l));
+ic();af()}
+
+function sp(p){document.querySelectorAll('.page').forEach(e=>e.style.display='none');document.querySelectorAll('.nav a').forEach(a=>a.classList.remove('ac'));document.getElementById('page-'+p).style.display='block';const nl=document.querySelector('.nav a[onclick*="'+p+'"]');if(nl)nl.classList.add('ac');if(p==='members')lm();if(p==='activity')la()}
+
+function ic(){const c=document.getElementById('cf');c.innerHTML='';const chs=[...new Set(FL.map(f=>f.primary_channel).filter(Boolean))].sort();const ab=document.createElement('button');ab.className='cb ac';ab.textContent='全部';ab.onclick=()=>tc('__all__');c.appendChild(ab);chs.forEach(ch=>{const b=document.createElement('button');b.className='cb';b.textContent=ch;b.onclick=()=>tc(ch);c.appendChild(b)})}
+
+function tc(ch){if(ch==='__all__'){AC.clear();document.querySelectorAll('.cb').forEach(b=>b.classList.toggle('ac',b.textContent==='全部'))}else{if(AC.has(ch))AC.delete(ch);else AC.add(ch);document.querySelectorAll('.cb:not(:first-child)').forEach(b=>b.classList.toggle('ac',AC.has(b.textContent)));document.querySelector('.cb').classList.toggle('ac',AC.size===0)}af()}
+
+function af(){const q=document.getElementById('si').value.trim().toLowerCase(),st=document.getElementById('ss').value;let f=FL.filter(x=>{if(AC.size&&!AC.has(x.primary_channel))return false;if(q&&!x.name.toLowerCase().includes(q))return false;return true});if(st==='name')f.sort((a,b)=>a.name.localeCompare(b.name,'zh'));else if(st==='score-desc')f.sort((a,b)=>(b.competition_score||0)-(a.competition_score||0));else if(st==='score-asc')f.sort((a,b)=>(a.competition_score||0)-(b.competition_score||0));document.getElementById('sc').textContent=f.length+'/'+FL.length;if(CV==='grid')rg(f);else rl(f)}
+
+function sv(v){CV=v;document.getElementById('gv').classList.toggle('ac',v==='grid');document.getElementById('lv').classList.toggle('ac',v==='list');af()}
+
+function rg(flowers){const c=document.getElementById('fc');if(!flowers.length){c.innerHTML='<div class="emp"><p>没有找到匹配的花卉</p></div>';return}c.innerHTML='<div class="fgrd"></div>';const g=c.firstElementChild;flowers.forEach(f=>{const sl=gs(f.competition_score),so=OW[f.id]||'missing';const d=document.createElement('div');d.className='fcd';d.innerHTML='<div class="iw" onclick="od(\''+f.id+'\')">'+(f.image_url?'<img src="'+IMG+f.image_url+'" loading="lazy" onerror="this.outerHTML=\'🌸\'">':'🌸')+'</div><div class="fn" onclick="od(\''+f.id+'\')">'+f.name+'</div><div><span class="ct">'+(f.primary_channel||'未知')+'</span> <span class="scb '+sl+'">🏆'+(f.competition_score??'-')+'</span></div><div class="mt2"><span class="st s-'+so.substring(0,2)+'" onclick="event.stopPropagation();cs(\''+f.id+'\')">'+(so==='owned'?'✅已拥有':so==='planting'?'🌱种植中':'⬜未拥有')+'</span></div>';g.appendChild(d)})}
+
+function rl(flowers){const c=document.getElementById('fc');if(!flowers.length){c.innerHTML='<div class="emp"><p>没有找到匹配的花卉</p></div>';return}c.innerHTML='<div class="tw"><table class="tbl"><thead><tr><th></th><th>花卉</th><th>渠道</th><th>分</th><th>状态</th></tr></thead><tbody></tbody></table></div>';const t=c.querySelector('tbody');flowers.forEach(f=>{const sl=gs(f.competition_score),so=OW[f.id]||'missing';const tr=document.createElement('tr');tr.style.cursor='pointer';tr.onclick=()=>od(f.id);tr.innerHTML='<td>'+(f.image_url?'<img src="'+IMG+f.image_url+'" style="width:2rem;height:2rem;border-radius:0.25rem;object-fit:cover" loading="lazy" onerror="this.outerHTML=\'🌸\'">':'🌸')+'</td><td>'+f.name+'</td><td><span class="ct">'+(f.primary_channel||'未知')+'</span></td><td><span class="scb '+sl+'">🏆'+(f.competition_score??'-')+'</span></td><td><span class="st s-'+so.substring(0,2)+'" onclick="event.stopPropagation();cs(\''+f.id+'\')">'+(so==='owned'?'✅已拥有':so==='planting'?'🌱种植中':'⬜未拥有')+'</span></td>';t.appendChild(tr)})}
+
+const CYC={missing:'owned',owned:'planting',planting:'missing'};
+async function cs(fid){if(!PR)return;const ns=CYC[OW[fid]||'missing'],nn=PR.nickname;if(sb){try{const{data:ex}=await sb.from('flower_ownership').select('id').eq('profile_user',nn).eq('flower_id',fid);if(ex&&ex.length)await sb.from('flower_ownership').update({status:ns,updated_at:new Date().toISOString()}).eq('id',ex[0].id);else await sb.from('flower_ownership').insert([{profile_user:nn,flower_id:fid,status:ns}]);await sb.from('activity_log').insert([{profile_user:nn,action:'mark_'+ns,flower_id:fid}])}catch(e){}}OW[fid]=ns;localStorage.setItem('fbo_'+nn,JSON.stringify(OW));af()}
+
+async function od(fid){const f=FL.find(x=>x.id===fid);if(!f)return;document.getElementById('dm').style.display='flex';document.getElementById('mt').textContent=f.name;const so=OW[fid]||'missing',sl=gs(f.competition_score);document.getElementById('mb').innerHTML='<div style="width:8rem;height:8rem;border-radius:var(--radius);background:var(--muted);margin:0 auto 0.75rem;display:flex;align-items:center;justify-content:center;overflow:hidden">'+(f.image_url?'<img src="'+IMG+f.image_url+'" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML=\'🌸\'">':'🌸')+'</div><div style="text-align:center;font-size:1.15rem;font-weight:700;margin-bottom:0.75rem">'+f.name+'</div><div style="display:grid;grid-template-columns:auto 1fr;gap:0.4rem 1rem;font-size:0.88rem"><span class="tm">获取渠道</span><span>'+(f.primary_channel||'未知')+'</span><span class="tm">竞赛分</span><span><span class="scb '+sl+'">🏆'+(f.competition_score??'-')+'</span></span><span class="tm">价格</span><span>'+(f.price?f.price+(f.currency||''):'-')+'</span><span class="tm">花瓶</span><span>'+(f.vase||'通用')+'</span></div><div style="display:flex;gap:0.5rem;margin-top:1rem;justify-content:center;flex-wrap:wrap"><span class="st s-ow" onclick="cs(\''+f.id+'\');cd()">✅已拥有</span><span class="st s-pl" onclick="cs(\''+f.id+'\');cd()">🌱种植中</span><span class="st s-mi" onclick="cs(\''+f.id+'\');cd()">⬜未拥有</span></div>'}
+function cd(){document.getElementById('dm').style.display='none'}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')cd()})
+
+async function lm(){const c=document.getElementById('mc');c.innerHTML='<div class="load">加载中...</div>';try{let m=[];if(sb){const{data:pfs}=await sb.from('profiles').select('*');if(pfs)for(const p of pfs){const{data:oo}=await sb.from('flower_ownership').select('*').eq('profile_user',p.nickname);const owd=oo?oo.filter(o=>o.status==='owned').length:0,pl=oo?oo.filter(o=>o.status==='planting').length:0;m.push({nickname:p.nickname,owned:owd,planting:pl,total:owd+pl,pct:FL.length?Math.round((owd+pl)/FL.length*100):0})}}m.sort((a,b)=>b.total-a.total);c.innerHTML=m.length?m.map((x,i)=>'<div class="mcd"><div class="mh"><div class="mav">'+x.nickname[0]+'</div><div style="flex:1"><div style="font-weight:600">'+x.nickname+' '+(i===0?'👑':'')+'</div><div class="ts tm">✅'+x.owned+' 🌱'+x.planting+'</div></div><div style="text-align:right"><div style="font-size:1.1rem;font-weight:700;color:var(--primary)">'+x.pct+'%</div><div class="ts tm">'+x.total+'/'+FL.length+'</div></div></div><div class="mpg"><div class="bar"><div class="fill" style="width:'+x.pct+'%"></div></div></div></div>').join(''):'<div class="emp"><p>还没有成员</p></div>'}catch(e){c.innerHTML='<div class="emp"><p>加载失败</p></div>'}}
+
+async function la(){const c=document.getElementById('ac');c.innerHTML='<div class="load">加载中...</div>';try{let logs=[];if(sb)try{const{data}=await sb.from('activity_log').select('*').order('created_at',{ascending:false}).limit(50);logs=data||[]}catch(e){}const at={mark_owned:'标记了✅',mark_planting:'开始种植🌱',mark_missing:'移除了⬜'};c.innerHTML=logs.length?'<div>'+logs.map(l=>'<div class="act"><div class="aav">'+(l.profile_user||'?')[0]+'</div><div class="acn"><span style="font-weight:600">'+l.profile_user+'</span> '+(at[l.action]||l.action)+' '+l.flower_id+'</div><div class="atm">'+ta(l.created_at)+'</div></div>').join('')+'</div>':'<div class="emp"><p>暂无活动</p></div>'}catch(e){c.innerHTML='<div class="emp"><p>加载失败</p></div>'}}
+
+function ta(d){const m=Math.floor((Date.now()-new Date(d).getTime())/60000);if(m<1)return'刚刚';if(m<60)return m+'分钟前';const h=Math.floor(m/60);if(h<24)return h+'小时前';return Math.floor(h/24)+'天前'}
+
+const sp2=localStorage.getItem('fbp');if(sp2){PR=JSON.parse(sp2);setTimeout(init,50)}else document.getElementById('authPage').style.display='flex'
+</script></body></html>
