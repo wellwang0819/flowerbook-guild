@@ -352,10 +352,13 @@ function renderList(f){
 }
 
 function cs(fid){
-  const cyc={missing:'owned',owned:'planting',planting:'missing'};
-  OW[fid]=cyc[OW[fid]||'missing'];
-  af();
+  const cur=OW[fid]||'missing';const sts=[{id:'missing',l:'⬜ 未拥有'},{id:'owned',l:'✅ 已拥有'},{id:'planting',l:'🌱 种植中'}];
+  document.getElementById('modT').textContent='选择状态';
+  document.getElementById('modB').innerHTML=sts.map(s=>`<div style="padding:0.6rem 1rem;margin-bottom:0.35rem;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:0.95rem;${s.id===cur?'background:#16653418;border-color:var(--primary);font-weight:600':''};text-align:center" onclick="setStatus('${fid}','${s.id}')">${s.l}${s.id===cur?' ← 当前':''}</div>`).join('');
+  document.getElementById('mod').style.display='flex';
 }
+function setStatus(fid,s){OW[fid]=s;document.getElementById('mod').style.display='none';af();}
+function csSet(fid,s){OW[fid]=s;af();cm();}
 
 function od(fid){
   const f=FL.find(x=>x.id===fid);if(!f)return;
@@ -374,9 +377,9 @@ function od(fid){
       <span class="tm">花瓶</span><span>${esc(f.vase||'通用')}</span>
     </div>
     <div style="display:flex;gap:0.5rem;margin-top:1rem;justify-content:center;flex-wrap:wrap">
-      <span class="st st-ow" onclick="OW['${f.id}']='owned';cs('${f.id}');cm()">✅已拥有</span>
-      <span class="st st-pl" onclick="OW['${f.id}']='planting';cs('${f.id}');cm()">🌱种植中</span>
-      <span class="st st-mi" onclick="OW['${f.id}']='missing';cs('${f.id}');cm()">⬜未拥有</span>
+      <span class="st st-ow" onclick="csSet('${f.id}','owned')">✅已拥有</span>
+      <span class="st st-pl" onclick="csSet('${f.id}','planting')">🌱种植中</span>
+      <span class="st st-mi" onclick="csSet('${f.id}','missing')">⬜未拥有</span>
     </div>`;
 }
 function cm(){document.getElementById('mod').style.display='none'}
