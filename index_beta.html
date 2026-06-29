@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>花园世界 · 公会花册</title>
+<title>花园世界 · 公会花册 [BETA]</title>
 <style>
 :root{--bg:#f8faf9;--fg:#0f172a;--card:#fff;--primary:#166534;--secondary:#f1f5f9;--muted:#e2e8f0;--muted-fg:#64748b;--accent:#ca8a04;--border:#e2e8f0;--radius:0.75rem;--danger:#dc2626;--success:#16a34a}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -153,8 +153,8 @@ function renderLogin(){
       <div id="pwdInfo" style="font-size:0.78rem;padding:0.4rem 0.6rem;background:var(--secondary);border-radius:var(--radius);margin-bottom:0.5rem"></div>
       <div class="fg"><label id="pwdLbl">密码</label><input type="password" id="pwdInp" onkeydown="if(event.key==='Enter')handleLogin()"/></div>
     </div>
-    <button class="btn btn-p" style="width:100%;justify-content:center" onclick="handleLogin()">进入花册 🌸</button>
-    <div style="text-align:center;margin-top:1rem"><a href="index_beta.html" style="font-size:0.78rem;color:var(--accent)">🧪 体验BETA测试版 →</a></div>
+    <button class="btn btn-p" style="width:100%;justify-content:center" onclick="handleLogin()">进入花册 🌸 [BETA]</button>
+    <div style="text-align:center;margin-top:1rem"><a href="index.html" style="font-size:0.78rem;color:var(--accent)">← 返回正式版</a></div>
   </div>`;
   rp('auth',`<div class="auth-pg">${html}</div>`);
   fl();
@@ -215,7 +215,7 @@ function afterLogin(){
 function renderApp(){
   const nav=GM.map(m=>m.n).includes(ME.n)?`
   <header class="hdr"><div class="hdr-in">
-    <div class="logo">🌸公会花册</div>
+    <div class="logo">🌸公会花册 <span style="font-size:0.55rem;background:var(--accent);color:#fff;padding:0.1rem 0.35rem;border-radius:0.25rem">BETA</span></div>
     <nav class="nav">
       <a data-pg="catalog" onclick="sp('catalog')">🌸花册</a>
       <a data-pg="my" onclick="sp('my')">🌷我的</a>
@@ -228,7 +228,7 @@ function renderApp(){
     <div class="usr"><span>${esc(ME.n)}</span><button class="btn btn-g btn-s" onclick="logout()">退出</button></div>
   </div></header>
   <main class="main" id="main"><div class="ph"><h1>🌸 花卉图鉴</h1></div></main>
-  <footer class="ftr">花园世界·公会花册 v2.2</footer>
+  <footer class="ftr">花园世界·公会花册 v2.2 BETA | 数据互通 | <a href="index.html" style="color:var(--muted-fg);text-decoration:underline">返回正式版</a></footer>
   <div class="flt" id="flt" style="display:none"><div class="fi" id="fi"></div><button class="btn btn-p btn-s" onclick="save()">💾 保存</button></div>
   <div class="mod" id="mod" style="display:none" onclick="if(event.target===this)cm()"><div class="mod-in" id="modIn"><div class="mod-h"><h2 id="modT"></h2><button class="btn btn-g btn-s" onclick="cm()">✕</button></div><div class="mod-b" id="modB"></div></div></div>
   `:`<div style="text-align:center;padding:2rem"><p>登录信息无效</p><button class="btn btn-p" onclick="logout()">重新登录</button></div>`;
