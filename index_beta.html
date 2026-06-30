@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>花园世界 · 公会花册 (BETA测试版)</title>
+<title>花园世界 · 公会花册</title>
 <style>
 :root{--bg:#f8faf9;--fg:#0f172a;--card:#fff;--primary:#166534;--secondary:#f1f5f9;--muted:#e2e8f0;--muted-fg:#64748b;--accent:#ca8a04;--border:#e2e8f0;--radius:0.75rem;--danger:#dc2626;--success:#16a34a}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -33,8 +33,8 @@ button{font-family:inherit;cursor:pointer}
 .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;gap:0.75rem;flex-wrap:wrap}
 .ph h1{font-size:1.25rem;font-weight:700}
 .ph p{font-size:0.85rem;color:var(--muted-fg)}
-.iw{width:100%;aspect-ratio:1;border-radius:var(--radius);background:var(--muted);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:0.3rem}
-.iw img{width:100%;height:100%;object-fit:cover}
+  .iw{width:100%;aspect-ratio:1;border-radius:var(--radius);background:var(--muted);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:0.3rem;padding:0.25rem}
+  .iw img{width:100%;height:100%;object-fit:contain;max-width:100%;max-height:100%}
 .fg{margin-bottom:0.75rem}
 .fg label{display:block;font-size:0.82rem;font-weight:500;margin-bottom:0.3rem}
 .fg input,.fg select,.fg textarea{width:100%;padding:0.45rem 0.65rem;border:1px solid var(--border);border-radius:var(--radius);font-size:0.85rem;outline:none;background:var(--card)}
@@ -142,7 +142,7 @@ function rp(p,data){
 function renderLogin(){
   const saved=localStorage.getItem('fbp');
   if(saved){try{ME=JSON.parse(saved);const g=GM.find(x=>x.n===ME.n);if(g){ME={...g,...ME};afterLogin();return}}catch(e){}}
-  let html=`<div class="auth-cd"><h1>🌸 花园世界</h1>
+  let html=`<div class="auth-cd"><h1>🌸 花园世界 <span style="font-size:0.65rem;background:#f59e0b;color:#fff;padding:0.1rem 0.4rem;border-radius:0.3rem;margin-left:0.5rem">BETA</span></h1>
     <p style="text-align:center;font-size:0.85rem;color:var(--muted-fg);margin-bottom:1rem">公会花册</p>
     <div class="err" id="lerr"></div>
     <div class="fg"><label>选择你的昵称</label>
@@ -154,11 +154,7 @@ function renderLogin(){
       <div class="fg"><label id="pwdLbl">密码</label><input type="password" id="pwdInp" onkeydown="if(event.key==='Enter')handleLogin()"/></div>
     </div>
     <button class="btn btn-p" style="width:100%;justify-content:center" onclick="handleLogin()">进入花册 🌸</button>
-    <div style="text-align:center;margin-top:1rem;padding:0.5rem;background:#ca8a0428;border:1px solid #ca8a0444;border-radius:var(--radius)">
-      <div style="font-size:0.85rem;font-weight:600;color:var(--accent);margin-bottom:0.25rem">🧪 BETA 测试版</div>
-      <div style="font-size:0.75rem;color:var(--muted-fg)">此版本为测试版本，数据可能与正式版不同步</div>
-    </div>
-    <div style="text-align:center;margin-top:0.5rem"><a href="index.html" style="font-size:0.78rem;color:var(--primary)">← 返回正式版</a></div>
+    <div style="text-align:center;margin-top:1rem"><a href="index_beta.html" style="font-size:0.78rem;color:var(--accent)">🧪 体验BETA测试版 →</a></div>
     <div style="text-align:center;margin-top:0.5rem"><a onclick="showAdminLogin()" style="font-size:0.78rem;color:var(--muted-fg);cursor:pointer">🔧 管理员入口</a></div>
   </div>`;
   rp('auth',`<div class="auth-pg">${html}</div>`);
@@ -200,9 +196,13 @@ function handleLogin(){
   if(!m)return;
   const pwd=document.getElementById('pwdInp')?.value||'';
   const savedPwd=localStorage.getItem('fbpwd_'+m.n)||'';
-  if(savedPwd&&pwd!==savedPwd){e.textContent='密码错误';return}
+  
+  // 通用密码：flower123（所有成员都可以用这个密码进入）
+  const COMMON_PWD = 'flower123';
+  
+  if(savedPwd&&pwd!==savedPwd&&pwd!==COMMON_PWD){e.textContent='密码错误';return}
   ME=m;
-  if(!savedPwd&&pwd)localStorage.setItem('fbpwd_'+m.n,pwd);
+  if(!savedPwd&&pwd&&pwd!==COMMON_PWD)localStorage.setItem('fbpwd_'+m.n,pwd);
   localStorage.setItem('fbp',JSON.stringify(m));
   // 从localStorage加载花朵状态
   try{OW=JSON.parse(localStorage.getItem('fbo_'+m.n))||{}}catch(e){OW={}}
@@ -361,10 +361,13 @@ function renderGrid(f){
   if(!f.length){c.innerHTML='<div class="card" style="text-align:center;padding:2rem;color:var(--muted-fg)">无匹配花朵</div>';return}
   c.innerHTML='<div class="fgrd">'+f.map(x=>{
     const s=OW[x.id]||'missing';const g=gd(x.competition_score);
-    return `<div class="fcd" onclick="od('${x.id}')">
+    // 计算已拥有该花的人数
+    const ownerCount=ALL_OW?Object.keys(ALL_OW).filter(n=>ALL_OW[n]&&ALL_OW[n][x.id]==='owned').length:0;
+    return `<div class="fcd" onclick="showFlowerOwners('${x.id}')">
       <div class="iw">${x.image_url?'<img src="'+IMG+x.image_url+'" loading="lazy" onerror="this.outerHTML=\'🌸\'">':'🌸'}</div>
       <div class="fn">${esc(x.name)}</div>
       <div><span class="gt ${g}">${gn(x.competition_score)}</span> <span style="font-size:0.7rem;color:var(--muted-fg)">🏆${x.competition_score}</span></div>
+      ${ownerCount>0?`<div style="font-size:0.65rem;color:var(--primary);margin-top:0.2rem">👥 已拥有：${ownerCount}人</div>`:''}
       <div style="margin-top:0.3rem"><span class="st st-${s.substring(0,2)}" onclick="event.stopPropagation();cs('${x.id}')">${s==='owned'?'✅已拥有':s==='planting'?'🌱种植中':'⬜未拥有'}</span></div>
     </div>`;
   }).join('')+'</div>';
@@ -376,7 +379,7 @@ function renderList(f){
   c.innerHTML='<div class="tbl"><table><thead><tr><th></th><th>花卉</th><th>品级</th><th>渠道</th><th>分</th><th>状态</th></tr></thead><tbody>'+f.map(x=>{
     const s=OW[x.id]||'missing';const g=gd(x.competition_score);
     return `<tr onclick="od('${x.id}')" style="cursor:pointer">
-      <td>${x.image_url?'<img src="'+IMG+x.image_url+'" style="width:2rem;height:2rem;border-radius:0.25rem;object-fit:cover" loading="lazy" onerror="this.outerHTML=\'🌸\'">':'🌸'}</td>
+      <td>${x.image_url?'<img src="'+IMG+x.image_url+'" style="width:2rem;height:2rem;border-radius:0.25rem;object-fit:contain" loading="lazy" onerror="this.outerHTML=\'🌸\'">':'🌸'}</td>
       <td style="font-weight:500">${esc(x.name)}</td>
       <td><span class="gt ${g}">${gn(x.competition_score)}</span></td>
       <td>${esc(x.primary_channel||'')}</td>
@@ -398,11 +401,15 @@ function csSet(fid,s){OW[fid]=s;af();cm();}
 function od(fid){
   const f=FL.find(x=>x.id===fid);if(!f)return;
   const s=OW[fid]||'missing';const g=gd(f.competition_score);
+  
+  // 计算已拥有该花的成员
+  const owners=ALL_OW?Object.keys(ALL_OW).filter(n=>ALL_OW[n]&&ALL_OW[n][fid]==='owned'):[];
+  
   document.getElementById('mod').style.display='flex';
   document.getElementById('modT').textContent=f.name;
   document.getElementById('modB').innerHTML=`
     <div style="width:8rem;height:8rem;border-radius:var(--radius);background:var(--muted);margin:0 auto 0.75rem;display:flex;align-items:center;justify-content:center;overflow:hidden">
-      ${f.image_url?'<img src="'+IMG+f.image_url+'" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML=\'🌸\'">':'🌸'}
+      ${f.image_url?'<img src="'+IMG+f.image_url+'" style="width:100%;height:100%;object-fit:contain" onerror="this.outerHTML=\'🌸\'">':'🌸'}
     </div>
     <div style="text-align:center;font-size:1.1rem;font-weight:700;margin-bottom:0.75rem">${f.name}</div>
     <div style="display:grid;grid-template-columns:auto 1fr;gap:0.35rem 1rem;font-size:0.88rem">
@@ -411,6 +418,13 @@ function od(fid){
       <span class="tm">渠道</span><span>${esc(f.primary_channel||'未知')}</span>
       <span class="tm">花瓶</span><span>${esc(f.vase||'通用')}</span>
     </div>
+    ${owners.length?`
+    <div style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--border)">
+      <div style="font-size:0.88rem;font-weight:600;margin-bottom:0.5rem">👥 已拥有（${owners.length}人）：</div>
+      <div style="max-height:150px;overflow-y:auto;font-size:0.82rem">
+        ${owners.map(n=>`<div style="padding:0.2rem 0;cursor:pointer" onclick="event.stopPropagation();selectMember('${n.replace(/'/g,'\\\'')}')">${esc(n)}</div>`).join('')}
+      </div>
+    </div>`:''}
     <div style="display:flex;gap:0.5rem;margin-top:1rem;justify-content:center;flex-wrap:wrap">
       <span class="st st-ow" onclick="csSet('${f.id}','owned')">✅已拥有</span>
       <span class="st st-pl" onclick="csSet('${f.id}','planting')">🌱种植中</span>
@@ -1064,7 +1078,83 @@ const ss=document.createElement('style');
 ss.textContent='@keyframes si{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}';
 document.head.appendChild(ss);
 
-loadFlowers().then(()=>{renderLogin()});
+loadFlowers().then(()=>{
+  renderLogin();
+  // 初始化成员花朵数据（从Excel导入的6个成员）
+  initMemberFlowers();
+});
+
+// 初始化成员花朵数据
+function initMemberFlowers(){
+  const MEMBER_FLOWERS={
+    "s464.花间酒":["九色灵鹿","星河映蕊","花屿闲趣","宝珠玉兰","悠游云间","花椅轻摇","落英浮香","赤霞火焰花","青璃火焰花","龙舟竞渡","丹红龙面花","伯利恒之星","曼珠沙华","梦紫郁金香","棉花小熊","泼墨","浅绀紫藤花","白紫凌霄花","盈粉大花萱草","紫晕石竹花","紫霁大岩桐","绛粉大岩桐","胭脂芍药","薄红虞美人","藤紫大花萱草","金玉良缘","黄焰","黄莺蔷薇花","云锦芍药","冰蓝矮牵牛","半见长寿花","明黄跳舞兰","朱砂丹桂","橘霞华珊","毛蕊紫银莲","波叶金桂","浅黄绿绒蒿","焰绯海葵","白茜剑兰","碧落月见草","粉樱月见草","粉紫华珊","粉红木槿花","粉鹤芋","绀紫飞燕草","绯色腊梅","芋紫剑兰","藤黄露薇花","蜜合月见草","轮生冬青","金橙海葵","金白德鸢","青山银桂","香槟玫瑰","黑曜大丽花","黑蕊白银莲"],
+    "s15.嫣然":["黄马蹄莲","蒲公英","紫马蹄莲","紫色风信子","合欢花","粉色风信子","茉莉花","嫩黄风信子","明黄如意菊","栀子花","淡粉如意菊","粉桃花","浅橘如意菊","嫩绿洋桔梗","紫色丁香花","浅粉洋桔梗","黄色丁香花","香槟洋桔梗","白百合","铃兰","黄百合","黄郁金香","粉郁金香","粉百合","红玫瑰","粉玫瑰","黄玫瑰","玉白贝母","白紫贝母","轻蓝贝母","浅黄沙漠玫","嫩粉沙漠玫","胭红蕨叶芍药","染杏贝壳花","白云乱子草","奶油向日葵","紫绣球","山茶花","粉绣球","蓝绣球","向日葵","鹤望兰","金盏菊","非洲菊","红马蹄莲","粉矢车菊","蓝矢车菊","素雪玉簪花","绛红报春花","黄白酢浆草","橙黄酢浆草","冰蓝谷鸢尾","桃粉谷鸢尾","汀蓝狸藻","浅紫落新妇","浅蓝落新妇","橘红海棠花","黄色海棠花","绯雪杰奎琳","碧落杰奎琳","杏黄杜鹃","忽地笑","紫矢车菊","月白兔狸藻","香紫兔狸藻","碧白石斛兰","嫣粉石斛兰","柔紫石斛兰","嫩绿花烟草","淡绯花烟草","烟紫花烟草","紫荷包牡丹","正红大丽花","金钟连翘","薄粉蕙兰","淡茜蜀葵花","金盏蜀葵花","殷红灯笼花","紫麦冬花","月白格桑花","水红落新妇","浅粉乒乓菊","浅橘乒乓菊","浅白乒乓菊","红鹤芋","白鹤芋","薄藤铁线莲","香水百合","凤梨花","迎春花","柔白茨菇","浅绯茨菇","蜜粉白玉草","橙霞洋金凤","绀紫肖鸢尾","粉云椴树花","暖阳金丝桃","淡粉矮牵牛","明黄矮牵牛","彤云六初花","细桃六初花","粉韵石竹花","赤晖石竹花","紫晕石竹花","橙霞花毛茛","朝晖姜荷花","明黄松虫草","梦紫郁金香","丹红龙面花","澄蓝龙面花","紫霁大岩桐","盈粉大花萱草","银白耀星花","重瓣紫灯花","黄焰","泼墨","霓粉垂丝茉莉","橙心剑兰","火蕊朱顶红","橘光朱顶红","胭脂芍药","云锦芍药","纯白木香花","棉花小熊","轮生冬青","粉红木槿花","橙黄虞美人","桃夭飞燕草","落霞灯笼花","紫晶灯笼花","粉黛德鸢","粉菲铁筷花","粉米露薇花","樱红跳舞兰","银白雪柳","绀紫飞燕草","赤焰火焰兰","藤黄露薇花","黑曜大丽花","曼陀罗华","橘霞华珊","焰绯海葵","暮粉紫藤花","薄红虞美人","白灵逐浪","杏色春衫","瑶光牡丹","澜牡丹","珠匣橘芙蓉","花汐星语","花信未迟","赤霞火焰花","青璃火焰花","水仙花","风铃花","星河映蕊","紫霄云庭","九色灵鹿","花屿闲趣","粉樱蝶舞玫瑰","幽蓝逐影","桃影浮澜","花椅轻摇","悠游云间","冰蓝矮牵牛","粉樱月见草","碧落月见草","绯色腊梅","香槟玫瑰","曼珠沙华","浅绀紫藤花","黛紫虞美人","幻紫铁线莲","甜橙美女樱","浅韵美女樱","烟粉格桑花","秋枫跳舞兰","星耀灵蕊","金玉良缘","云白垂丝茉莉","云紫茨菇","浅粉仙客来","康乃馨","紫桔梗","紫罗兰","蝴蝶兰","雏菊","蓝星花","小苍兰","桃月・云汐灼华","槐月・蝶梦轻语","榴月・绛花照影","花笼流芳","曜绯帝王花","青碧华珊","伯利恒之星","月影摇光","玫瑰粉银莲"],
+    "s4.贾咏彤":["青璃火焰花","龙舟竞渡","梦紫郁金香","黄焰","冰蓝矮牵牛","粉红木槿花","赤焰火焰兰","轮生冬青","鹅黄铁筷花"],
+    "s440.纳兰欣瑜":["花屿闲趣","姑苏雨蒙","宝珠玉兰","悠游云间","珠宝之心","花椅轻摇","落英浮香","青璃火焰花","龙舟竞渡","丹红耧斗菜","伯利恒之星","奶黄花毛茛","明黄凌霄花","晴蓝耧斗菜","晴黄金鱼草","暮山耧斗菜","曼珠沙华","朝晖姜荷花","柔绯金鱼草","梦紫郁金香","棉花小熊","泼墨","甜橙美女樱","盈粉大花萱草","盈粉芍药","绀紫肖鸢尾","胭脂芍药","藕粉长寿花","蜜桃花毛茛","霜白海葵","黄焰","黄莺蔷薇花","云锦芍药","冰蓝矮牵牛","粉红木槿花","绀紫飞燕草","绯色腊梅","轮生冬青","雾粉麦冬花"],
+    "s599.夏木倾城":["花屿闲趣","宝珠玉兰","花椅轻摇","落英浮香","青璃火焰花","梦紫郁金香","棉花小熊","泼墨","胭脂芍药","黄焰","冰蓝矮牵牛","夕岚蔷薇花","毛蕊紫银莲","白茜剑兰","碧落月见草","粉樱月见草","粉红木槿花","粉鹤芋","莹白露薇花","轮生冬青","青山银桂","香槟玫瑰","鹅黄铁筷花"],
+    "s487.叶薇":["星河映蕊","花屿闲趣","宝珠玉兰","悠游云间","紫曜牡丹","花椅轻摇","落英浮香","青璃火焰花","龙舟竞渡","丹红龙面花","伯利恒之星","幻紫铁线莲","晴山蔷薇花","柔蓝飞燕草","梦紫郁金香","棉花小熊","泼墨","粉胭海棠花","蓝叶苏铁","金玉良缘","黄焰","冰蓝矮牵牛","奶桃大丽花","幽蓝绿绒蒿","曼陀罗华","毛蕊紫银莲","浅黄绿绒蒿","玫瑰粉银莲","碧落月见草","粉樱月见草","粉红木槿花","粉鹤芋","绯色腊梅","赤焰火焰兰","轮生冬青","轻紫大花葱","金白德鸢","雾粉麦冬花","香槟玫瑰","鸳鸯茉莉","黑曜大丽花","黑蕊白银莲"]
+  };
+
+  // 【修复】用FL数组（已有id字段）建立 花名→id 的映射
+  const flowerNameToId={};
+  FL.forEach(f=>{flowerNameToId[f.name]=f.id;});
+
+  for(const [gmName,flowerNames] of Object.entries(MEMBER_FLOWERS)){
+    console.log('初始化成员数据：' + gmName);
+
+    ALL_OW[gmName]={};
+    let count=0;
+    let miss=0;
+
+    flowerNames.forEach(name=>{
+      const fid=flowerNameToId[name];  // 用FL的id（如'FL001'）
+      if(fid){
+        ALL_OW[gmName][fid]='owned';
+        count++;
+      }else{
+        miss++;
+        if(miss<=5)console.warn('未找到花朵：'+name);
+      }
+    });
+
+    console.log(gmName+' 初始化完成：'+count+'朵花'+(miss?'，'+miss+'朵未匹配':''));
+  }
+
+  localStorage.setItem('fbo_all',JSON.stringify(ALL_OW));
+  console.log('✅ 成员花朵数据初始化完成');
+}
+
+// 新增功能：显示每朵花被哪些成员拥有
+function showFlowerOwners(fid) {
+  const owners = [];
+  for (const [nick, flowers] of Object.entries(ALL_OW)) {
+    if (flowers[fid] === 'owned') {
+      owners.push(nick);
+    }
+  }
+  
+  let html = '<div style="padding:1rem">';
+  html += '<h3>🌸 ' + FL.find(f => f.id === fid).name + '</h3>';
+  html += '<p>已拥有人数：<strong>' + owners.length + '</strong></p>';
+  
+  if (owners.length > 0) {
+    html += '<div style="margin-top:0.5rem;max-height:200px;overflow-y:auto">';
+    owners.forEach(nick => {
+      html += '<div style="padding:0.25rem 0;border-bottom:1px solid #e2e8f0">' + esc(nick) + '</div>';
+    });
+    html += '</div>';
+  } else {
+    html += '<p style="color:var(--muted-fg);margin-top:0.5rem">暂无成员拥有此花</p>';
+  }
+  
+  html += '</div>';
+  
+  document.getElementById('modT').textContent = '查看拥有成员';
+  document.getElementById('modB').innerHTML = html;
+  document.getElementById('mod').style.display = 'flex';
+}
+
+
 </script>
 </body>
 </html>
