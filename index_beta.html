@@ -113,9 +113,10 @@ button{font-family:inherit;cursor:pointer}
   .gt{font-size:0.62rem;padding:0.06rem 0.28rem}
 
   /* 表格 - 横向滚动 */
-  .tbl{font-size:0.68rem}
+  .tbl{font-size:0.68rem;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tbl table{min-width:100%}
   .tbl th,.tbl td{padding:0.3rem 0.4rem}
-  .tbl th{font-size:0.65rem}
+  .tbl th{font-size:0.65rem;white-space:nowrap}
 
   /* 表单 */
   .fg label{font-size:0.78rem}
@@ -149,6 +150,16 @@ button{font-family:inherit;cursor:pointer}
   /* 文字辅助 */
   .tm,.ts{font-size:0.76rem}
   .err{font-size:0.74rem}
+
+  /* 用户信息区 - 手机端省略长名称 */
+  .usr{max-width:5rem;flex-shrink:0}
+  .usr span{max-width:3rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block}
+
+  /* 搜索框 */
+  .sb{min-width:100px}
+
+  /* 筛选栏 - 手机端换行 */
+  select[style*="padding"]{padding:0.3rem 0.4rem!important;font-size:0.75rem!important}
 
   /* 隐藏/调整部分桌面元素 */
   .ftr{padding:1rem;font-size:0.72rem;margin-top:1.25rem}
