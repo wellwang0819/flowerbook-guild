@@ -33,8 +33,8 @@ button{font-family:inherit;cursor:pointer}
 .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;gap:0.75rem;flex-wrap:wrap}
 .ph h1{font-size:1.25rem;font-weight:700}
 .ph p{font-size:0.85rem;color:var(--muted-fg)}
-.iw{width:100%;aspect-ratio:1;border-radius:var(--radius);background:var(--muted);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:0.3rem}
-.iw img{width:100%;height:100%;object-fit:cover}
+  .iw{width:100%;aspect-ratio:1;border-radius:var(--radius);background:var(--muted);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:0.3rem;padding:0.25rem}
+  .iw img{width:100%;height:100%;object-fit:contain;max-width:100%;max-height:100%}
 .fg{margin-bottom:0.75rem}
 .fg label{display:block;font-size:0.82rem;font-weight:500;margin-bottom:0.3rem}
 .fg input,.fg select,.fg textarea{width:100%;padding:0.45rem 0.65rem;border:1px solid var(--border);border-radius:var(--radius);font-size:0.85rem;outline:none;background:var(--card)}
@@ -361,10 +361,13 @@ function renderGrid(f){
   if(!f.length){c.innerHTML='<div class="card" style="text-align:center;padding:2rem;color:var(--muted-fg)">无匹配花朵</div>';return}
   c.innerHTML='<div class="fgrd">'+f.map(x=>{
     const s=OW[x.id]||'missing';const g=gd(x.competition_score);
-    return `<div class="fcd" onclick="od('${x.id}')">
+    // 计算已拥有该花的人数
+    const ownerCount=ALL_OW?Object.keys(ALL_OW).filter(n=>ALL_OW[n]&&ALL_OW[n][x.id]==='owned').length:0;
+    return `<div class="fcd" onclick="showFlowerOwners('${x.id}')">
       <div class="iw">${x.image_url?'<img src="'+IMG+x.image_url+'" loading="lazy" onerror="this.outerHTML=\'🌸\'">':'🌸'}</div>
       <div class="fn">${esc(x.name)}</div>
       <div><span class="gt ${g}">${gn(x.competition_score)}</span> <span style="font-size:0.7rem;color:var(--muted-fg)">🏆${x.competition_score}</span></div>
+      ${ownerCount>0?`<div style="font-size:0.65rem;color:var(--primary);margin-top:0.2rem">👥 已拥有：${ownerCount}人</div>`:''}
       <div style="margin-top:0.3rem"><span class="st st-${s.substring(0,2)}" onclick="event.stopPropagation();cs('${x.id}')">${s==='owned'?'✅已拥有':s==='planting'?'🌱种植中':'⬜未拥有'}</span></div>
     </div>`;
   }).join('')+'</div>';
@@ -376,7 +379,7 @@ function renderList(f){
   c.innerHTML='<div class="tbl"><table><thead><tr><th></th><th>花卉</th><th>品级</th><th>渠道</th><th>分</th><th>状态</th></tr></thead><tbody>'+f.map(x=>{
     const s=OW[x.id]||'missing';const g=gd(x.competition_score);
     return `<tr onclick="od('${x.id}')" style="cursor:pointer">
-      <td>${x.image_url?'<img src="'+IMG+x.image_url+'" style="width:2rem;height:2rem;border-radius:0.25rem;object-fit:cover" loading="lazy" onerror="this.outerHTML=\'🌸\'">':'🌸'}</td>
+      <td>${x.image_url?'<img src="'+IMG+x.image_url+'" style="width:2rem;height:2rem;border-radius:0.25rem;object-fit:contain" loading="lazy" onerror="this.outerHTML=\'🌸\'">':'🌸'}</td>
       <td style="font-weight:500">${esc(x.name)}</td>
       <td><span class="gt ${g}">${gn(x.competition_score)}</span></td>
       <td>${esc(x.primary_channel||'')}</td>
@@ -398,11 +401,15 @@ function csSet(fid,s){OW[fid]=s;af();cm();}
 function od(fid){
   const f=FL.find(x=>x.id===fid);if(!f)return;
   const s=OW[fid]||'missing';const g=gd(f.competition_score);
+  
+  // 计算已拥有该花的成员
+  const owners=ALL_OW?Object.keys(ALL_OW).filter(n=>ALL_OW[n]&&ALL_OW[n][fid]==='owned'):[];
+  
   document.getElementById('mod').style.display='flex';
   document.getElementById('modT').textContent=f.name;
   document.getElementById('modB').innerHTML=`
     <div style="width:8rem;height:8rem;border-radius:var(--radius);background:var(--muted);margin:0 auto 0.75rem;display:flex;align-items:center;justify-content:center;overflow:hidden">
-      ${f.image_url?'<img src="'+IMG+f.image_url+'" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML=\'🌸\'">':'🌸'}
+      ${f.image_url?'<img src="'+IMG+f.image_url+'" style="width:100%;height:100%;object-fit:contain" onerror="this.outerHTML=\'🌸\'">':'🌸'}
     </div>
     <div style="text-align:center;font-size:1.1rem;font-weight:700;margin-bottom:0.75rem">${f.name}</div>
     <div style="display:grid;grid-template-columns:auto 1fr;gap:0.35rem 1rem;font-size:0.88rem">
@@ -411,6 +418,13 @@ function od(fid){
       <span class="tm">渠道</span><span>${esc(f.primary_channel||'未知')}</span>
       <span class="tm">花瓶</span><span>${esc(f.vase||'通用')}</span>
     </div>
+    ${owners.length?`
+    <div style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--border)">
+      <div style="font-size:0.88rem;font-weight:600;margin-bottom:0.5rem">👥 已拥有（${owners.length}人）：</div>
+      <div style="max-height:150px;overflow-y:auto;font-size:0.82rem">
+        ${owners.map(n=>`<div style="padding:0.2rem 0;cursor:pointer" onclick="event.stopPropagation();selectMember('${n.replace(/'/g,'\\\'')}')">${esc(n)}</div>`).join('')}
+      </div>
+    </div>`:''}
     <div style="display:flex;gap:0.5rem;margin-top:1rem;justify-content:center;flex-wrap:wrap">
       <span class="st st-ow" onclick="csSet('${f.id}','owned')">✅已拥有</span>
       <span class="st st-pl" onclick="csSet('${f.id}','planting')">🌱种植中</span>
@@ -1086,11 +1100,8 @@ function initMemberFlowers(){
   FD.forEach(f=>{flowerNameMap[f.n]=f;});
   
   for(const [nickname,flowerNames] of Object.entries(MEMBER_FLOWERS)){
-    // 检查是否已有数据
-    if(ALL_OW[nickname]&&Object.keys(ALL_OW[nickname]).length>0){
-      console.log(nickname+' 已有数据，跳过初始化');
-      continue;
-    }
+    // 【强制模式】不管是否有旧数据，都重新初始化
+    console.log('强制重新初始化：' + nickname);
     
     // 初始化数据
     ALL_OW[nickname]={};
@@ -1113,6 +1124,38 @@ function initMemberFlowers(){
   localStorage.setItem('fbo_all',JSON.stringify(ALL_OW));
   console.log('成员花朵数据初始化完成');
 }
+
+// 新增功能：显示每朵花被哪些成员拥有
+function showFlowerOwners(fid) {
+  const owners = [];
+  for (const [nick, flowers] of Object.entries(ALL_OW)) {
+    if (flowers[fid] === 'owned') {
+      owners.push(nick);
+    }
+  }
+  
+  let html = '<div style="padding:1rem">';
+  html += '<h3>🌸 ' + FL.find(f => f.id === fid).name + '</h3>';
+  html += '<p>已拥有人数：<strong>' + owners.length + '</strong></p>';
+  
+  if (owners.length > 0) {
+    html += '<div style="margin-top:0.5rem;max-height:200px;overflow-y:auto">';
+    owners.forEach(nick => {
+      html += '<div style="padding:0.25rem 0;border-bottom:1px solid #e2e8f0">' + esc(nick) + '</div>';
+    });
+    html += '</div>';
+  } else {
+    html += '<p style="color:var(--muted-fg);margin-top:0.5rem">暂无成员拥有此花</p>';
+  }
+  
+  html += '</div>';
+  
+  document.getElementById('modT').textContent = '查看拥有成员';
+  document.getElementById('modB').innerHTML = html;
+  document.getElementById('mod').style.display = 'flex';
+}
+
+
 </script>
 </body>
 </html>
