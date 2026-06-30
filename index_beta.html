@@ -1118,10 +1118,13 @@ function initMemberFlowers(){
     });
 
     console.log(gmName+' 初始化完成：'+count+'朵花'+(miss?'，'+miss+'朵未匹配':''));
+    
+    // 【关键修复】同步写入个人数据 fbo_xxx，这样登录后"我的花册"才能看到
+    localStorage.setItem('fbo_'+gmName, JSON.stringify(ALL_OW[gmName]));
   }
 
   localStorage.setItem('fbo_all',JSON.stringify(ALL_OW));
-  console.log('✅ 成员花朵数据初始化完成');
+  console.log('✅ 成员花朵数据初始化完成（含个人数据）');
 }
 
 // 新增功能：显示每朵花被哪些成员拥有
