@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>花园世界 · 公会花册 [BETA]</title>
+<title>花园世界 · 公会花册 (BETA测试版)</title>
 <style>
 :root{--bg:#f8faf9;--fg:#0f172a;--card:#fff;--primary:#166534;--secondary:#f1f5f9;--muted:#e2e8f0;--muted-fg:#64748b;--accent:#ca8a04;--border:#e2e8f0;--radius:0.75rem;--danger:#dc2626;--success:#16a34a}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -153,8 +153,13 @@ function renderLogin(){
       <div id="pwdInfo" style="font-size:0.78rem;padding:0.4rem 0.6rem;background:var(--secondary);border-radius:var(--radius);margin-bottom:0.5rem"></div>
       <div class="fg"><label id="pwdLbl">密码</label><input type="password" id="pwdInp" onkeydown="if(event.key==='Enter')handleLogin()"/></div>
     </div>
-    <button class="btn btn-p" style="width:100%;justify-content:center" onclick="handleLogin()">进入花册 🌸 [BETA]</button>
-    <div style="text-align:center;margin-top:1rem"><a href="index.html" style="font-size:0.78rem;color:var(--accent)">← 返回正式版</a></div>
+    <button class="btn btn-p" style="width:100%;justify-content:center" onclick="handleLogin()">进入花册 🌸</button>
+    <div style="text-align:center;margin-top:1rem;padding:0.5rem;background:#ca8a0428;border:1px solid #ca8a0444;border-radius:var(--radius)">
+      <div style="font-size:0.85rem;font-weight:600;color:var(--accent);margin-bottom:0.25rem">🧪 BETA 测试版</div>
+      <div style="font-size:0.75rem;color:var(--muted-fg)">此版本为测试版本，数据可能与正式版不同步</div>
+    </div>
+    <div style="text-align:center;margin-top:0.5rem"><a href="index.html" style="font-size:0.78rem;color:var(--primary)">← 返回正式版</a></div>
+    <div style="text-align:center;margin-top:0.5rem"><a onclick="showAdminLogin()" style="font-size:0.78rem;color:var(--muted-fg);cursor:pointer">🔧 管理员入口</a></div>
   </div>`;
   rp('auth',`<div class="auth-pg">${html}</div>`);
   fl();
@@ -207,6 +212,36 @@ function handleLogin(){
   afterLogin();
 }
 
+function showAdminLogin(){
+  document.getElementById('mod').style.display='flex';
+  document.getElementById('modT').textContent='管理员登录';
+  document.getElementById('modB').innerHTML=`
+    <div class="fg"><label>管理密码</label><input type="password" id="adminPwd" placeholder="请输入管理密码" onkeydown="if(event.key==='Enter')doAdminLogin()"/></div>
+    <div class="err" id="adminErr"></div>
+    <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:0.75rem">
+      <button class="btn btn-g" onclick="cm()">取消</button>
+      <button class="btn btn-p" onclick="doAdminLogin()">登录</button>
+    </div>`;
+  setTimeout(()=>document.getElementById('adminPwd')?.focus(),100);
+}
+
+function doAdminLogin(){
+  const pwd=document.getElementById('adminPwd')?.value||'';
+  const errEl=document.getElementById('adminErr');
+  
+  if(pwd!=='admin123'){
+    if(errEl)errEl.textContent='管理密码错误';
+    return;
+  }
+  
+  // 管理员登录成功
+  cm();
+  ME={n:'管理员',rn:'管理员',r:1,l:99,isAdmin:true};
+  localStorage.setItem('fbp',JSON.stringify(ME));
+  afterLogin();
+  toast('管理员登录成功');
+}
+
 function afterLogin(){
   renderApp();
 }
@@ -215,7 +250,7 @@ function afterLogin(){
 function renderApp(){
   const nav=GM.map(m=>m.n).includes(ME.n)?`
   <header class="hdr"><div class="hdr-in">
-    <div class="logo">🌸公会花册 <span style="font-size:0.55rem;background:var(--accent);color:#fff;padding:0.1rem 0.35rem;border-radius:0.25rem">BETA</span></div>
+    <div class="logo">🌸公会花册</div>
     <nav class="nav">
       <a data-pg="catalog" onclick="sp('catalog')">🌸花册</a>
       <a data-pg="my" onclick="sp('my')">🌷我的</a>
@@ -228,7 +263,7 @@ function renderApp(){
     <div class="usr"><span>${esc(ME.n)}</span><button class="btn btn-g btn-s" onclick="logout()">退出</button></div>
   </div></header>
   <main class="main" id="main"><div class="ph"><h1>🌸 花卉图鉴</h1></div></main>
-  <footer class="ftr">花园世界·公会花册 v2.2 BETA | 数据互通 | <a href="index.html" style="color:var(--muted-fg);text-decoration:underline">返回正式版</a></footer>
+  <footer class="ftr">花园世界·公会花册 v2.2</footer>
   <div class="flt" id="flt" style="display:none"><div class="fi" id="fi"></div><button class="btn btn-p btn-s" onclick="save()">💾 保存</button></div>
   <div class="mod" id="mod" style="display:none" onclick="if(event.target===this)cm()"><div class="mod-in" id="modIn"><div class="mod-h"><h2 id="modT"></h2><button class="btn btn-g btn-s" onclick="cm()">✕</button></div><div class="mod-b" id="modB"></div></div></div>
   `:`<div style="text-align:center;padding:2rem"><p>登录信息无效</p><button class="btn btn-p" onclick="logout()">重新登录</button></div>`;
@@ -712,6 +747,14 @@ function renderSettings(m){
     <div class="card"><div class="card-h"><h3>🔑 账号</h3></div>
       <div style="display:flex;gap:0.35rem;flex-wrap:wrap"><button class="btn btn-w btn-s" onclick="confirmReset()">🔄 重置数据</button><button class="btn btn-d btn-s" onclick="confirmLeave()">🚪 退出公会</button></div>
     </div>
+    <div class="card"><div class="card-h"><h3>💾 数据备份</h3></div>
+      <div class="tm ts mb2">导出您的花朵数据到JSON文件，或<br>从备份文件导入恢复数据</div>
+      <div style="display:flex;gap:0.35rem;flex-wrap:wrap">
+        <button class="btn btn-p btn-s" onclick="exportData()">📤 导出备份</button>
+        <button class="btn btn-g btn-s" onclick="document.getElementById('importFile').click()">📥 导入备份</button>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)"/>
+      </div>
+    </div>
     ${isAdm(ME)?`<div class="card"><div class="card-h"><h3>👑 管理员面板</h3></div><div id="admPanel"></div></div>`:''}`;
   if(isAdm(ME))loadAdm();
 }
@@ -751,10 +794,268 @@ function doLeave(){
   localStorage.removeItem('fbp');localStorage.removeItem('fbo_'+ME.n);
   cm();toast('已退出公会','info');logout();
 }
+function exportData(){
+  // 收集所有用户数据
+  const backup={
+    version: '1.0',
+    exportTime: new Date().toISOString(),
+    user: ME.n,
+    data: {
+      ownFlowers: OW,  // 用户的花朵数据
+      allFlowers: ALL_OW  // 如果有全员数据
+    }
+  };
+  
+  // 转换为JSON字符串
+  const jsonStr = JSON.stringify(backup, null, 2);
+  const blob = new Blob([jsonStr], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  
+  // 创建下载链接
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `花册备份_${ME.n}_${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  toast('备份已导出');
+}
+
+function importData(fileInput){
+  const file = fileInput.files[0];
+  if(!file){
+    toast('未选择文件', 'error');
+    return;
+  }
+  
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const backup = JSON.parse(e.target.result);
+      
+      // 验证备份文件格式
+      if(!backup.data || !backup.data.ownFlowers){
+        toast('备份文件格式错误', 'error');
+        return;
+      }
+      
+      // 确认导入
+      document.getElementById('mod').style.display='flex';
+      document.getElementById('modT').textContent='确认导入备份';
+      document.getElementById('modB').innerHTML=`
+        <p class="tm">导入后将覆盖当前数据</p>
+        <p class="tm">备份用户: ${esc(backup.user||'未知')}</p>
+        <p class="tm">备份时间: ${backup.exportTime?new Date(backup.exportTime).toLocaleString('zh-CN'):'未知'}</p>
+        <div style="display:flex;gap:0.5rem;justify-content:center;margin-top:1rem">
+          <button class="btn btn-g" onclick="cm()">取消</button>
+          <button class="btn btn-p" onclick="doImportData(${JSON.stringify(backup).replace(/"/g,'&quot;')})">确认导入</button>
+        </div>`;
+    }catch(err){
+      toast('备份文件解析失败', 'error');
+    }
+  };
+  reader.readAsText(file);
+  fileInput.value = '';  // 清空文件输入
+}
+
+function doImportData(backup){
+  try{
+    // 导入数据
+    OW = backup.data.ownFlowers || {};
+    if(backup.data.allFlowers){
+      ALL_OW = backup.data.allFlowers;
+      localStorage.setItem('fbo_all', JSON.stringify(ALL_OW));
+    }
+    
+    // 保存到localStorage
+    localStorage.setItem('fbo_'+ME.n, JSON.stringify(OW));
+    
+    cm();
+    toast('备份已导入');
+    
+    // 刷新当前页面
+    af();
+  }catch(err){
+    toast('导入失败: ' + err.message, 'error');
+  }
+}
+
 function loadAdm(){
+  if(!ME.isAdmin){
+    // 普通管理员功能（会长/副会长）
+    const c=document.getElementById('admPanel');
+    c.innerHTML=`<div class="tm">管理员功能：可查看和管理已退出成员（待扩展）</div>`;
+    return;
+  }
+  
+  // 超级管理员功能
   const c=document.getElementById('admPanel');
-  // 简化版：仅显示通知
-  c.innerHTML='<div class="tm">管理员功能：可查看和管理已退出成员（待扩展）</div>';
+  c.innerHTML=`
+    <div style="display:flex;gap:0.35rem;flex-wrap:wrap;margin-bottom:1rem">
+      <button class="btn btn-p btn-s" onclick="adminExportAll()">📤 导出全员数据</button>
+      <button class="btn btn-g btn-s" onclick="adminImportAll()">📥 导入全员数据</button>
+      <button class="btn btn-w btn-s" onclick="adminResetAll()">🔄 重置所有数据</button>
+    </div>
+    <div class="card" style="margin-top:0.5rem">
+      <div class="card-h"><h4>📊 数据概览</h4></div>
+      <div style="font-size:0.82rem;line-height:1.8">
+        <div>总成员数：<strong>${GM.length}</strong></div>
+        <div>已登录成员：<strong>${Object.keys(ALL_OW).length}</strong></div>
+        <div>总花朵标记数：<strong>${Object.values(ALL_OW).reduce((s,v)=>s+Object.keys(v).filter(k=>v[k]==='owned').length,0)}</strong></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:0.5rem">
+      <div class="card-h"><h4>🔍 成员数据管理</h4></div>
+      <div style="max-height:200px;overflow-y:auto">
+        ${GM.map(m=>{
+          const owns=ALL_OW[m.n]||{};
+          const ownCount=Object.keys(owns).filter(k=>owns[k]==='owned').length;
+          return `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;border-bottom:1px solid var(--border)">
+            <span style="flex:1;font-size:0.82rem">${esc(m.n)}</span>
+            <span class="tm" style="font-size:0.75rem">${ownCount}朵</span>
+            <button class="btn btn-s btn-g" onclick="adminViewMember('${m.n}')">查看</button>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+function adminExportAll(){
+  // 导出所有成员数据
+  const backup={
+    version:'1.0',
+    exportTime:new Date().toISOString(),
+    type:'admin_full',
+    data:{
+      allFlowers:ALL_OW,
+      members:GM
+    }
+  };
+  
+  const jsonStr=JSON.stringify(backup,null,2);
+  const blob=new Blob([jsonStr],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`全员数据备份_${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('全员数据已导出');
+}
+
+function adminImportAll(){
+  // 创建文件输入
+  const input=document.createElement('input');
+  input.type='file';
+  input.accept='.json';
+  input.onchange=function(){
+    const file=this.files[0];
+    if(!file)return;
+    
+    const reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        const backup=JSON.parse(e.target.result);
+        if(!backup.data||!backup.data.allFlowers){
+          toast('备份文件格式错误','error');
+          return;
+        }
+        
+        // 确认导入
+        document.getElementById('mod').style.display='flex';
+        document.getElementById('modT').textContent='确认导入全员数据';
+        document.getElementById('modB').innerHTML=`
+          <p class="tm">导入后将覆盖所有成员数据</p>
+          <p class="tm">备份时间: ${backup.exportTime?new Date(backup.exportTime).toLocaleString('zh-CN'):'未知'}</p>
+          <div style="display:flex;gap:0.5rem;justify-content:center;margin-top:1rem">
+            <button class="btn btn-g" onclick="cm()">取消</button>
+            <button class="btn btn-p" onclick="doAdminImportAll(${JSON.stringify(backup).replace(/"/g,'&quot;')})">确认导入</button>
+          </div>`;
+      }catch(err){
+        toast('备份文件解析失败','error');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function doAdminImportAll(backup){
+  try{
+    ALL_OW=backup.data.allFlowers||{};
+    localStorage.setItem('fbo_all',JSON.stringify(ALL_OW));
+    cm();
+    toast('全员数据已导入');
+    loadAdm();  // 刷新管理员面板
+  }catch(err){
+    toast('导入失败: '+err.message,'error');
+  }
+}
+
+function adminResetAll(){
+  document.getElementById('mod').style.display='flex';
+  document.getElementById('modT').textContent='确认重置所有数据';
+  document.getElementById('modB').innerHTML=`
+    <p class="tm" style="color:var(--danger);font-weight:600">⚠️ 警告：此操作将清空所有成员的花朵数据！</p>
+    <p class="tm">此操作不可恢复，请先导出备份</p>
+    <div style="display:flex;gap:0.5rem;justify-content:center;margin-top:1rem">
+      <button class="btn btn-g" onclick="cm()">取消</button>
+      <button class="btn btn-d" onclick="doAdminResetAll()">确认重置所有</button>
+    </div>`;
+}
+
+function doAdminResetAll(){
+  // 清空所有数据
+  GM.forEach(m=>{
+    localStorage.removeItem('fbo_'+m.n);
+  });
+  ALL_OW={};
+  localStorage.setItem('fbo_all',JSON.stringify(ALL_OW));
+  cm();
+  toast('所有数据已重置');
+  loadAdm();  // 刷新管理员面板
+}
+
+function adminViewMember(nick){
+  const owns=ALL_OW[nick]||{};
+  const owned=Object.keys(owns).filter(k=>owns[k]==='owned');
+  const planting=Object.keys(owns).filter(k=>owns[k]==='planting');
+  
+  document.getElementById('mod').style.display='flex';
+  document.getElementById('modT').textContent='成员数据: '+nick;
+  document.getElementById('modB').innerHTML=`
+    <div style="font-size:0.82rem;line-height:1.8">
+      <div>已拥有：<strong>${owned.length}</strong> 朵</div>
+      <div>种植中：<strong>${planting.length}</strong> 朵</div>
+      <div>总分：<strong>${owned.reduce((s,k)=>s+(FL.find(f=>f.id===k)?.competition_score||0),0)}</strong> 分</div>
+    </div>
+    <div style="margin-top:1rem;display:flex;gap:0.5rem;justify-content:flex-end">
+      <button class="btn btn-g" onclick="cm()">关闭</button>
+      <button class="btn btn-d" onclick="adminClearMember('${nick}')">清空该成员数据</button>
+    </div>`;
+}
+
+function adminClearMember(nick){
+  document.getElementById('mod').style.display='flex';
+  document.getElementById('modT').textContent='确认清空';
+  document.getElementById('modB').innerHTML=`
+    <p class="tm">确认清空 <strong>${esc(nick)}</strong> 的所有花朵数据？</p>
+    <div style="display:flex;gap:0.5rem;justify-content:center;margin-top:1rem">
+      <button class="btn btn-g" onclick="cm()">取消</button>
+      <button class="btn btn-d" onclick="doAdminClearMember('${nick}')">确认清空</button>
+    </div>`;
+}
+
+function doAdminClearMember(nick){
+  localStorage.removeItem('fbo_'+nick);
+  if(ALL_OW[nick]){delete ALL_OW[nick];localStorage.setItem('fbo_all',JSON.stringify(ALL_OW))}
+  cm();
+  toast('已清空 '+nick+' 的数据');
+  loadAdm();  // 刷新管理员面板
 }
 
 // ===== 启动 =====

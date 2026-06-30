@@ -155,6 +155,7 @@ function renderLogin(){
     </div>
     <button class="btn btn-p" style="width:100%;justify-content:center" onclick="handleLogin()">进入花册 🌸</button>
     <div style="text-align:center;margin-top:1rem"><a href="index_beta.html" style="font-size:0.78rem;color:var(--accent)">🧪 体验BETA测试版 →</a></div>
+    <div style="text-align:center;margin-top:0.5rem"><a onclick="showAdminLogin()" style="font-size:0.78rem;color:var(--muted-fg);cursor:pointer">🔧 管理员入口</a></div>
   </div>`;
   rp('auth',`<div class="auth-pg">${html}</div>`);
   fl();
@@ -195,9 +196,13 @@ function handleLogin(){
   if(!m)return;
   const pwd=document.getElementById('pwdInp')?.value||'';
   const savedPwd=localStorage.getItem('fbpwd_'+m.n)||'';
-  if(savedPwd&&pwd!==savedPwd){e.textContent='密码错误';return}
+  
+  // 通用密码：flower123（所有成员都可以用这个密码进入）
+  const COMMON_PWD = 'flower123';
+  
+  if(savedPwd&&pwd!==savedPwd&&pwd!==COMMON_PWD){e.textContent='密码错误';return}
   ME=m;
-  if(!savedPwd&&pwd)localStorage.setItem('fbpwd_'+m.n,pwd);
+  if(!savedPwd&&pwd&&pwd!==COMMON_PWD)localStorage.setItem('fbpwd_'+m.n,pwd);
   localStorage.setItem('fbp',JSON.stringify(m));
   // 从localStorage加载花朵状态
   try{OW=JSON.parse(localStorage.getItem('fbo_'+m.n))||{}}catch(e){OW={}}
@@ -205,6 +210,36 @@ function handleLogin(){
   try{ALL_OW=JSON.parse(localStorage.getItem('fbo_all'))||{}}catch(e){ALL_OW={}}
   if(!ALL_OW[m.n])ALL_OW[m.n]={};
   afterLogin();
+}
+
+function showAdminLogin(){
+  document.getElementById('mod').style.display='flex';
+  document.getElementById('modT').textContent='管理员登录';
+  document.getElementById('modB').innerHTML=`
+    <div class="fg"><label>管理密码</label><input type="password" id="adminPwd" placeholder="请输入管理密码" onkeydown="if(event.key==='Enter')doAdminLogin()"/></div>
+    <div class="err" id="adminErr"></div>
+    <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:0.75rem">
+      <button class="btn btn-g" onclick="cm()">取消</button>
+      <button class="btn btn-p" onclick="doAdminLogin()">登录</button>
+    </div>`;
+  setTimeout(()=>document.getElementById('adminPwd')?.focus(),100);
+}
+
+function doAdminLogin(){
+  const pwd=document.getElementById('adminPwd')?.value||'';
+  const errEl=document.getElementById('adminErr');
+  
+  if(pwd!=='admin123'){
+    if(errEl)errEl.textContent='管理密码错误';
+    return;
+  }
+  
+  // 管理员登录成功
+  cm();
+  ME={n:'管理员',rn:'管理员',r:1,l:99,isAdmin:true};
+  localStorage.setItem('fbp',JSON.stringify(ME));
+  afterLogin();
+  toast('管理员登录成功');
 }
 
 function afterLogin(){
@@ -712,6 +747,14 @@ function renderSettings(m){
     <div class="card"><div class="card-h"><h3>🔑 账号</h3></div>
       <div style="display:flex;gap:0.35rem;flex-wrap:wrap"><button class="btn btn-w btn-s" onclick="confirmReset()">🔄 重置数据</button><button class="btn btn-d btn-s" onclick="confirmLeave()">🚪 退出公会</button></div>
     </div>
+    <div class="card"><div class="card-h"><h3>💾 数据备份</h3></div>
+      <div class="tm ts mb2">导出您的花朵数据到JSON文件，或<br>从备份文件导入恢复数据</div>
+      <div style="display:flex;gap:0.35rem;flex-wrap:wrap">
+        <button class="btn btn-p btn-s" onclick="exportData()">📤 导出备份</button>
+        <button class="btn btn-g btn-s" onclick="document.getElementById('importFile').click()">📥 导入备份</button>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)"/>
+      </div>
+    </div>
     ${isAdm(ME)?`<div class="card"><div class="card-h"><h3>👑 管理员面板</h3></div><div id="admPanel"></div></div>`:''}`;
   if(isAdm(ME))loadAdm();
 }
@@ -751,10 +794,268 @@ function doLeave(){
   localStorage.removeItem('fbp');localStorage.removeItem('fbo_'+ME.n);
   cm();toast('已退出公会','info');logout();
 }
+function exportData(){
+  // 收集所有用户数据
+  const backup={
+    version: '1.0',
+    exportTime: new Date().toISOString(),
+    user: ME.n,
+    data: {
+      ownFlowers: OW,  // 用户的花朵数据
+      allFlowers: ALL_OW  // 如果有全员数据
+    }
+  };
+  
+  // 转换为JSON字符串
+  const jsonStr = JSON.stringify(backup, null, 2);
+  const blob = new Blob([jsonStr], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  
+  // 创建下载链接
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `花册备份_${ME.n}_${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  toast('备份已导出');
+}
+
+function importData(fileInput){
+  const file = fileInput.files[0];
+  if(!file){
+    toast('未选择文件', 'error');
+    return;
+  }
+  
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const backup = JSON.parse(e.target.result);
+      
+      // 验证备份文件格式
+      if(!backup.data || !backup.data.ownFlowers){
+        toast('备份文件格式错误', 'error');
+        return;
+      }
+      
+      // 确认导入
+      document.getElementById('mod').style.display='flex';
+      document.getElementById('modT').textContent='确认导入备份';
+      document.getElementById('modB').innerHTML=`
+        <p class="tm">导入后将覆盖当前数据</p>
+        <p class="tm">备份用户: ${esc(backup.user||'未知')}</p>
+        <p class="tm">备份时间: ${backup.exportTime?new Date(backup.exportTime).toLocaleString('zh-CN'):'未知'}</p>
+        <div style="display:flex;gap:0.5rem;justify-content:center;margin-top:1rem">
+          <button class="btn btn-g" onclick="cm()">取消</button>
+          <button class="btn btn-p" onclick="doImportData(${JSON.stringify(backup).replace(/"/g,'&quot;')})">确认导入</button>
+        </div>`;
+    }catch(err){
+      toast('备份文件解析失败', 'error');
+    }
+  };
+  reader.readAsText(file);
+  fileInput.value = '';  // 清空文件输入
+}
+
+function doImportData(backup){
+  try{
+    // 导入数据
+    OW = backup.data.ownFlowers || {};
+    if(backup.data.allFlowers){
+      ALL_OW = backup.data.allFlowers;
+      localStorage.setItem('fbo_all', JSON.stringify(ALL_OW));
+    }
+    
+    // 保存到localStorage
+    localStorage.setItem('fbo_'+ME.n, JSON.stringify(OW));
+    
+    cm();
+    toast('备份已导入');
+    
+    // 刷新当前页面
+    af();
+  }catch(err){
+    toast('导入失败: ' + err.message, 'error');
+  }
+}
+
 function loadAdm(){
+  if(!ME.isAdmin){
+    // 普通管理员功能（会长/副会长）
+    const c=document.getElementById('admPanel');
+    c.innerHTML=`<div class="tm">管理员功能：可查看和管理已退出成员（待扩展）</div>`;
+    return;
+  }
+  
+  // 超级管理员功能
   const c=document.getElementById('admPanel');
-  // 简化版：仅显示通知
-  c.innerHTML='<div class="tm">管理员功能：可查看和管理已退出成员（待扩展）</div>';
+  c.innerHTML=`
+    <div style="display:flex;gap:0.35rem;flex-wrap:wrap;margin-bottom:1rem">
+      <button class="btn btn-p btn-s" onclick="adminExportAll()">📤 导出全员数据</button>
+      <button class="btn btn-g btn-s" onclick="adminImportAll()">📥 导入全员数据</button>
+      <button class="btn btn-w btn-s" onclick="adminResetAll()">🔄 重置所有数据</button>
+    </div>
+    <div class="card" style="margin-top:0.5rem">
+      <div class="card-h"><h4>📊 数据概览</h4></div>
+      <div style="font-size:0.82rem;line-height:1.8">
+        <div>总成员数：<strong>${GM.length}</strong></div>
+        <div>已登录成员：<strong>${Object.keys(ALL_OW).length}</strong></div>
+        <div>总花朵标记数：<strong>${Object.values(ALL_OW).reduce((s,v)=>s+Object.keys(v).filter(k=>v[k]==='owned').length,0)}</strong></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:0.5rem">
+      <div class="card-h"><h4>🔍 成员数据管理</h4></div>
+      <div style="max-height:200px;overflow-y:auto">
+        ${GM.map(m=>{
+          const owns=ALL_OW[m.n]||{};
+          const ownCount=Object.keys(owns).filter(k=>owns[k]==='owned').length;
+          return `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;border-bottom:1px solid var(--border)">
+            <span style="flex:1;font-size:0.82rem">${esc(m.n)}</span>
+            <span class="tm" style="font-size:0.75rem">${ownCount}朵</span>
+            <button class="btn btn-s btn-g" onclick="adminViewMember('${m.n}')">查看</button>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+function adminExportAll(){
+  // 导出所有成员数据
+  const backup={
+    version:'1.0',
+    exportTime:new Date().toISOString(),
+    type:'admin_full',
+    data:{
+      allFlowers:ALL_OW,
+      members:GM
+    }
+  };
+  
+  const jsonStr=JSON.stringify(backup,null,2);
+  const blob=new Blob([jsonStr],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`全员数据备份_${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('全员数据已导出');
+}
+
+function adminImportAll(){
+  // 创建文件输入
+  const input=document.createElement('input');
+  input.type='file';
+  input.accept='.json';
+  input.onchange=function(){
+    const file=this.files[0];
+    if(!file)return;
+    
+    const reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        const backup=JSON.parse(e.target.result);
+        if(!backup.data||!backup.data.allFlowers){
+          toast('备份文件格式错误','error');
+          return;
+        }
+        
+        // 确认导入
+        document.getElementById('mod').style.display='flex';
+        document.getElementById('modT').textContent='确认导入全员数据';
+        document.getElementById('modB').innerHTML=`
+          <p class="tm">导入后将覆盖所有成员数据</p>
+          <p class="tm">备份时间: ${backup.exportTime?new Date(backup.exportTime).toLocaleString('zh-CN'):'未知'}</p>
+          <div style="display:flex;gap:0.5rem;justify-content:center;margin-top:1rem">
+            <button class="btn btn-g" onclick="cm()">取消</button>
+            <button class="btn btn-p" onclick="doAdminImportAll(${JSON.stringify(backup).replace(/"/g,'&quot;')})">确认导入</button>
+          </div>`;
+      }catch(err){
+        toast('备份文件解析失败','error');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function doAdminImportAll(backup){
+  try{
+    ALL_OW=backup.data.allFlowers||{};
+    localStorage.setItem('fbo_all',JSON.stringify(ALL_OW));
+    cm();
+    toast('全员数据已导入');
+    loadAdm();  // 刷新管理员面板
+  }catch(err){
+    toast('导入失败: '+err.message,'error');
+  }
+}
+
+function adminResetAll(){
+  document.getElementById('mod').style.display='flex';
+  document.getElementById('modT').textContent='确认重置所有数据';
+  document.getElementById('modB').innerHTML=`
+    <p class="tm" style="color:var(--danger);font-weight:600">⚠️ 警告：此操作将清空所有成员的花朵数据！</p>
+    <p class="tm">此操作不可恢复，请先导出备份</p>
+    <div style="display:flex;gap:0.5rem;justify-content:center;margin-top:1rem">
+      <button class="btn btn-g" onclick="cm()">取消</button>
+      <button class="btn btn-d" onclick="doAdminResetAll()">确认重置所有</button>
+    </div>`;
+}
+
+function doAdminResetAll(){
+  // 清空所有数据
+  GM.forEach(m=>{
+    localStorage.removeItem('fbo_'+m.n);
+  });
+  ALL_OW={};
+  localStorage.setItem('fbo_all',JSON.stringify(ALL_OW));
+  cm();
+  toast('所有数据已重置');
+  loadAdm();  // 刷新管理员面板
+}
+
+function adminViewMember(nick){
+  const owns=ALL_OW[nick]||{};
+  const owned=Object.keys(owns).filter(k=>owns[k]==='owned');
+  const planting=Object.keys(owns).filter(k=>owns[k]==='planting');
+  
+  document.getElementById('mod').style.display='flex';
+  document.getElementById('modT').textContent='成员数据: '+nick;
+  document.getElementById('modB').innerHTML=`
+    <div style="font-size:0.82rem;line-height:1.8">
+      <div>已拥有：<strong>${owned.length}</strong> 朵</div>
+      <div>种植中：<strong>${planting.length}</strong> 朵</div>
+      <div>总分：<strong>${owned.reduce((s,k)=>s+(FL.find(f=>f.id===k)?.competition_score||0),0)}</strong> 分</div>
+    </div>
+    <div style="margin-top:1rem;display:flex;gap:0.5rem;justify-content:flex-end">
+      <button class="btn btn-g" onclick="cm()">关闭</button>
+      <button class="btn btn-d" onclick="adminClearMember('${nick}')">清空该成员数据</button>
+    </div>`;
+}
+
+function adminClearMember(nick){
+  document.getElementById('mod').style.display='flex';
+  document.getElementById('modT').textContent='确认清空';
+  document.getElementById('modB').innerHTML=`
+    <p class="tm">确认清空 <strong>${esc(nick)}</strong> 的所有花朵数据？</p>
+    <div style="display:flex;gap:0.5rem;justify-content:center;margin-top:1rem">
+      <button class="btn btn-g" onclick="cm()">取消</button>
+      <button class="btn btn-d" onclick="doAdminClearMember('${nick}')">确认清空</button>
+    </div>`;
+}
+
+function doAdminClearMember(nick){
+  localStorage.removeItem('fbo_'+nick);
+  if(ALL_OW[nick]){delete ALL_OW[nick];localStorage.setItem('fbo_all',JSON.stringify(ALL_OW))}
+  cm();
+  toast('已清空 '+nick+' 的数据');
+  loadAdm();  // 刷新管理员面板
 }
 
 // ===== 启动 =====
@@ -763,7 +1064,55 @@ const ss=document.createElement('style');
 ss.textContent='@keyframes si{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}';
 document.head.appendChild(ss);
 
-loadFlowers().then(()=>{renderLogin()});
+loadFlowers().then(()=>{
+  renderLogin();
+  // 初始化成员花朵数据（从Excel导入的6个成员）
+  initMemberFlowers();
+});
+
+// 初始化成员花朵数据
+function initMemberFlowers(){
+  const MEMBER_FLOWERS={
+    "花间酒":["九色灵鹿","星河映蕊","花屿闲趣","宝珠玉兰","悠游云间","花椅轻摇","落英浮香","赤霞火焰花","青璃火焰花","龙舟竞渡","丹红龙面花","伯利恒之星","曼珠沙华","梦紫郁金香","棉花小熊","泼墨","浅绀紫藤花","白紫凌霄花","盈粉大花萱草","紫晕石竹花","紫霁大岩桐","绛粉大岩桐","胭脂芍药","薄红虞美人","藤紫大花萱草","金玉良缘","黄焰","黄莺蔷薇花","云锦芍药","冰蓝矮牵牛","半见长寿花","明黄跳舞兰","朱砂丹桂","橘霞华珊","毛蕊紫银莲","波叶金桂","浅黄绿绒蒿","焰绯海葵","白茜剑兰","碧落月见草","粉樱月见草","粉紫华珊","粉红木槿花","粉鹤芋","绀紫飞燕草","绯色腊梅","芋紫剑兰","藤黄露薇花","蜜合月见草","轮生冬青","金橙海葵","金白德鸢","青山银桂","香槟玫瑰","黑曜大丽花","黑蕊白银莲"],
+    "嫣然":["黄马蹄莲","蒲公英","紫马蹄莲","紫色风信子","合欢花","粉色风信子","茉莉花","嫩黄风信子","明黄如意菊","栀子花","淡粉如意菊","粉桃花","浅橘如意菊","嫩绿洋桔梗","紫色丁香花","浅粉洋桔梗","黄色丁香花","香槟洋桔梗","白百合","铃兰","黄百合","黄郁金香","粉郁金香","粉百合","红玫瑰","粉玫瑰","黄玫瑰","玉白贝母","白紫贝母","轻蓝贝母","浅黄沙漠玫","嫩粉沙漠玫","胭红蕨叶芍药","染杏贝壳花","白云乱子草","奶油向日葵","紫绣球","山茶花","粉绣球","蓝绣球","向日葵","鹤望兰","金盏菊","非洲菊","红马蹄莲","粉矢车菊","蓝矢车菊","素雪玉簪花","绛红报春花","黄白酢浆草","橙黄酢浆草","冰蓝谷鸢尾","桃粉谷鸢尾","汀蓝狸藻","浅紫落新妇","浅蓝落新妇","橘红海棠花","黄色海棠花","绯雪杰奎琳","碧落杰奎琳","杏黄杜鹃","忽地笑","紫矢车菊","月白兔狸藻","香紫兔狸藻","碧白石斛兰","嫣粉石斛兰","柔紫石斛兰","嫩绿花烟草","淡绯花烟草","烟紫花烟草","紫荷包牡丹","正红大丽花","金钟连翘","薄粉蕙兰","淡茜蜀葵花","金盏蜀葵花","殷红灯笼花","紫麦冬花","月白格桑花","水红落新妇","浅粉乒乓菊","浅橘乒乓菊","浅白乒乓菊","红鹤芋","白鹤芋","薄藤铁线莲","香水百合","凤梨花","迎春花","柔白茨菇","浅绯茨菇","蜜粉白玉草","橙霞洋金凤","绀紫肖鸢尾","粉云椴树花","暖阳金丝桃","淡粉矮牵牛","明黄矮牵牛","彤云六初花","细桃六初花","粉韵石竹花","赤晖石竹花","紫晕石竹花","橙霞花毛茛","朝晖姜荷花","明黄松虫草","梦紫郁金香","丹红龙面花","澄蓝龙面花","紫霁大岩桐","盈粉大花萱草","银白耀星花","重瓣紫灯花","黄焰","泼墨","霓粉垂丝茉莉","橙心剑兰","火蕊朱顶红","橘光朱顶红","胭脂芍药","云锦芍药","纯白木香花","棉花小熊","轮生冬青","粉红木槿花","橙黄虞美人","桃夭飞燕草","落霞灯笼花","紫晶灯笼花","粉黛德鸢","粉菲铁筷花","粉米露薇花","樱红跳舞兰","银白雪柳","绀紫飞燕草","赤焰火焰兰","藤黄露薇花","黑曜大丽花","曼陀罗华","橘霞华珊","焰绯海葵","暮粉紫藤花","薄红虞美人","白灵逐浪","杏色春衫","瑶光牡丹","澜牡丹","珠匣橘芙蓉","花汐星语","花信未迟","赤霞火焰花","青璃火焰花","水仙花","风铃花","星河映蕊","紫霄云庭","九色灵鹿","花屿闲趣","粉樱蝶舞玫瑰","幽蓝逐影","桃影浮澜","花椅轻摇","悠游云间","冰蓝矮牵牛","粉樱月见草","碧落月见草","绯色腊梅","香槟玫瑰","曼珠沙华","浅绀紫藤花","黛紫虞美人","幻紫铁线莲","甜橙美女樱","浅韵美女樱","烟粉格桑花","秋枫跳舞兰","星耀灵蕊","金玉良缘","云白垂丝茉莉","云紫茨菇","浅粉仙客来","康乃馨","紫桔梗","紫罗兰","蝴蝶兰","雏菊","蓝星花","小苍兰","桃月・云汐灼华","槐月・蝶梦轻语","榴月・绛花照影","花笼流芳","曜绯帝王花","青碧华珊","伯利恒之星","月影摇光","玫瑰粉银莲"],
+    "贾咏彤":["青璃火焰花","龙舟竞渡","梦紫郁金香","黄焰","冰蓝矮牵牛","粉红木槿花","赤焰火焰兰","轮生冬青","鹅黄铁筷花"],
+    "纳兰欣瑜":["花屿闲趣","姑苏雨蒙","宝珠玉兰","悠游云间","珠宝之心","花椅轻摇","落英浮香","青璃火焰花","龙舟竞渡","丹红耧斗菜","伯利恒之星","奶黄花毛茛","明黄凌霄花","晴蓝耧斗菜","晴黄金鱼草","暮山耧斗菜","曼珠沙华","朝晖姜荷花","柔绯金鱼草","梦紫郁金香","棉花小熊","泼墨","甜橙美女樱","盈粉大花萱草","盈粉芍药","绀紫肖鸢尾","胭脂芍药","藕粉长寿花","蜜桃花毛茛","霜白海葵","黄焰","黄莺蔷薇花","云锦芍药","冰蓝矮牵牛","粉红木槿花","绀紫飞燕草","绯色腊梅","轮生冬青","雾粉麦冬花"],
+    "夏木倾城":["花屿闲趣","宝珠玉兰","花椅轻摇","落英浮香","青璃火焰花","梦紫郁金香","棉花小熊","泼墨","胭脂芍药","黄焰","冰蓝矮牵牛","夕岚蔷薇花","毛蕊紫银莲","白茜剑兰","碧落月见草","粉樱月见草","粉红木槿花","粉鹤芋","莹白露薇花","轮生冬青","青山银桂","香槟玫瑰","鹅黄铁筷花"],
+    "叶薇":["星河映蕊","花屿闲趣","宝珠玉兰","悠游云间","紫曜牡丹","花椅轻摇","落英浮香","青璃火焰花","龙舟竞渡","丹红龙面花","伯利恒之星","幻紫铁线莲","晴山蔷薇花","柔蓝飞燕草","梦紫郁金香","棉花小熊","泼墨","粉胭海棠花","蓝叶苏铁","金玉良缘","黄焰","冰蓝矮牵牛","奶桃大丽花","幽蓝绿绒蒿","曼陀罗华","毛蕊紫银莲","浅黄绿绒蒿","玫瑰粉银莲","碧落月见草","粉樱月见草","粉红木槿花","粉鹤芋","绯色腊梅","赤焰火焰兰","轮生冬青","轻紫大花葱","金白德鸢","雾粉麦冬花","香槟玫瑰","鸳鸯茉莉","黑曜大丽花","黑蕊白银莲"]
+  };
+  
+  // 建立花名到花朵对象的映射
+  const flowerNameMap={};
+  FD.forEach(f=>{flowerNameMap[f.n]=f;});
+  
+  for(const [nickname,flowerNames] of Object.entries(MEMBER_FLOWERS)){
+    // 检查是否已有数据
+    if(ALL_OW[nickname]&&Object.keys(ALL_OW[nickname]).length>0){
+      console.log(nickname+' 已有数据，跳过初始化');
+      continue;
+    }
+    
+    // 初始化数据
+    ALL_OW[nickname]={};
+    let count=0;
+    
+    flowerNames.forEach(name=>{
+      const flower=flowerNameMap[name];
+      if(flower){
+        ALL_OW[nickname][flower.id]='owned';
+        count++;
+      }else{
+        console.warn('未找到花朵：'+name);
+      }
+    });
+    
+    console.log(nickname+' 初始化完成：'+count+'朵花');
+  }
+  
+  // 保存到localStorage
+  localStorage.setItem('fbo_all',JSON.stringify(ALL_OW));
+  console.log('成员花朵数据初始化完成');
+}
 </script>
 </body>
 </html>
