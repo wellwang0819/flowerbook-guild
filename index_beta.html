@@ -224,7 +224,19 @@ function rp(p,data){
 // 登录页
 function renderLogin(){
   const saved=localStorage.getItem('fbp');
-  if(saved){try{ME=JSON.parse(saved);const g=GM.find(x=>x.n===ME.n);if(g){ME={...g,...ME};afterLogin();return}}catch(e){}}
+  if(saved){try{ME=JSON.parse(saved);const g=GM.find(x=>x.n===ME.n);if(g){ME={...g,...ME};
+    // 【关键修复】自动登录也要加载和同步OW数据（之前这里直接afterLogin导致OW为空）
+    try{OW=JSON.parse(localStorage.getItem('fbo_'+ME.n))||{}}catch(e){OW={}}
+    try{ALL_OW=JSON.parse(localStorage.getItem('fbo_all'))||{}}catch(e){ALL_OW={}}
+    if(ALL_OW[ME.n]&&Object.keys(ALL_OW[ME.n]).length>0){
+      let changed=false;
+      Object.entries(ALL_OW[ME.n]).forEach(([fid,st])=>{
+        if(!OW[fid]){OW[fid]=st;changed=true;}
+      });
+      if(changed)localStorage.setItem('fbo_'+ME.n, JSON.stringify(OW));
+    }
+    if(!ALL_OW[ME.n])ALL_OW[ME.n]={};
+    afterLogin();return}}catch(e){}}
   let html=`<div class="auth-cd"><h1>🌸 花园世界</h1>
     <p style="text-align:center;font-size:0.85rem;color:var(--muted-fg);margin-bottom:1rem">公会花册</p>
     <div class="err" id="lerr"></div>
@@ -552,7 +564,12 @@ function renderMy(m){
       ${fs.length?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:0.3rem;max-height:250px;overflow-y:auto">${fs.map(f=>`<div style="border:1px solid var(--border);border-radius:0.4rem;padding:0.25rem;text-align:center;cursor:pointer" onclick="od('${f.id}')"><div style="font-size:0.65rem;overflow:hidden;text-overflow:ellipsis">${esc(f.name)}</div><span style="font-size:0.6rem;color:${g.co}">🏆${f.competition_score}</span></div>`).join('')}</div>`:'<div class="tm" style="padding:0.5rem;text-align:center">暂无此品级花朵</div>'}
     </div>`;
   }).join('');
+  // 调试信息（帮助排查数据问题）
+  const owCount = Object.keys(OW).length;
+  const allCount = ALL_OW && ME && ALL_OW[ME.n] ? Object.keys(ALL_OW[ME.n]).length : 0;
+  const debugInfo = owCount === 0 ? '<div style="background:#fef2f2;border:1px solid #fecaca;padding:0.5rem;border-radius:0.5rem;margin-bottom:0.5rem;font-size:0.75rem;color:#dc2626">⚠️ 数据加载异常：个人数据为空 | 全员数据中该成员：<strong>' + allCount + '</strong>朵 | 请尝试<strong style="text-decoration:underline" onclick="if(confirm(\'确认重载页面？\'))location.reload()">刷新页面</strong></div>' : '';
   m.innerHTML=`<div class="ph"><div><h1>🌷 我的花册</h1></div></div>
+    ${debugInfo}
     <div class="card" style="text-align:center"><div style="display:flex;justify-content:center;gap:2rem"><div><div style="font-size:1.8rem;font-weight:700;color:var(--primary)">${tot}</div><div class="tm">已拥有</div></div><div><div style="font-size:1.8rem;font-weight:700;color:var(--accent)">${totSc}</div><div class="tm">总分</div></div></div></div>
     ${html}`;
 }
