@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>花园世界 · 公会花册 [BETA]</title>
+<title>花园世界 · 公会花册</title>
 <style>
 :root{--bg:#f8faf9;--fg:#0f172a;--card:#fff;--primary:#166534;--secondary:#f1f5f9;--muted:#e2e8f0;--muted-fg:#64748b;--accent:#ca8a04;--border:#e2e8f0;--radius:0.75rem;--danger:#dc2626;--success:#16a34a}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -185,6 +185,14 @@ const RN={1:'会长',2:'副会长',3:'理事',4:'菁英',5:'成员'};
 // ===== 状态 =====
 let ME=null,OW={},ALL_OW={},PG='auth',CV='grid',AC=new Set,AS=[];
 let IMG='https://flowerbook.my';
+// 品级隐藏状态（持久化）
+try{var _hg=JSON.parse(localStorage.getItem('fb_hidden_grades')||'[]');}catch(e){var _hg=[];}
+let HIDDEN_GRADES=new Set(_hg);
+function toggleGradeHide(gn){
+  if(HIDDEN_GRADES.has(gn))HIDDEN_GRADES.delete(gn);else HIDDEN_GRADES.add(gn);
+  localStorage.setItem('fb_hidden_grades',JSON.stringify([...HIDDEN_GRADES]));
+  af();
+}
 
 // ===== 工具 =====
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
@@ -281,7 +289,16 @@ function handleLogin(){
   localStorage.setItem('fbp',JSON.stringify(m));
   // 从localStorage加载花朵状态
   try{OW=JSON.parse(localStorage.getItem('fbo_'+m.n))||{}}catch(e){OW={}}
-  // 加载全员状态（简化版）
+  // 【修复】如果个人数据为空但全员数据中有该成员，同步过来
+  if(!OW||Object.keys(OW).length===0){
+    try{ALL_OW=JSON.parse(localStorage.getItem('fbo_all'))||{}}catch(e){ALL_OW={}}
+    if(ALL_OW[m.n]&&Object.keys(ALL_OW[m.n]).length>0){
+      OW={...ALL_OW[m.n]};
+      localStorage.setItem('fbo_'+m.n, JSON.stringify(OW));
+      console.log('📥 已从全员数据同步 '+m.n+' 的花册（'+Object.keys(OW).length+'朵）');
+    }
+  }
+  // 加载全员状态
   try{ALL_OW=JSON.parse(localStorage.getItem('fbo_all'))||{}}catch(e){ALL_OW={}}
   if(!ALL_OW[m.n])ALL_OW[m.n]={};
   afterLogin();
@@ -325,7 +342,7 @@ function afterLogin(){
 function renderApp(){
   const nav=GM.map(m=>m.n).includes(ME.n)?`
   <header class="hdr"><div class="hdr-in">
-    <div class="logo">🌸公会花册 <span style="background:var(--accent);color:#fff;font-size:0.6rem;padding:0.1rem 0.35rem;border-radius:0.3rem;margin-left:0.3rem">BETA</span></div>
+    <div class="logo">🌸公会花册</div>
     <nav class="nav">
       <a data-pg="catalog" onclick="sp('catalog')">🌸花册</a>
       <a data-pg="my" onclick="sp('my')">🌷我的</a>
@@ -337,7 +354,7 @@ function renderApp(){
     </nav>
     <div class="usr"><span>${esc(ME.n)}</span><button class="btn btn-g btn-s" onclick="logout()">退出</button></div>
   </div></header>
-  <main class="main" id="main"><div class="ph"><h1>🌸 花卉图鉴</h1></div></main>
+  <main class="main" id="main"><div class="ph"><h1>🌸 花卉图鉴 ⚙️ BETA</h1></div></main>
   <footer class="ftr">花园世界·公会花册 v2.2</footer>
   <div class="flt" id="flt" style="display:none"><div class="fi" id="fi"></div><button class="btn btn-p btn-s" onclick="save()">💾 保存</button></div>
   <div class="mod" id="mod" style="display:none" onclick="if(event.target===this)cm()"><div class="mod-in" id="modIn"><div class="mod-h"><h2 id="modT"></h2><button class="btn btn-g btn-s" onclick="cm()">✕</button></div><div class="mod-b" id="modB"></div></div></div>
@@ -384,10 +401,10 @@ function save(){
 // ===== 花册 =====
 function renderCatalog(m){
   const channels=[...new Set(FL.map(f=>f.primary_channel).filter(Boolean))].sort();
-  let html=`<div class="ph"><div><h1>🌸 花卉图鉴</h1><p>收录 ${FL.length} 种花·点击标记</p></div>
+  let html=`<div class="ph"><div><h1>🌸 花卉图鉴 ⚙️ BETA</h1><p>收录 ${FL.length} 种花·点击标记</p></div>
     <div style="display:flex;gap:0.35rem;flex-wrap:wrap">
       <select onchange="af()" id="cSort" style="padding:0.35rem 0.5rem;border:1px solid var(--border);border-radius:var(--radius);font-size:0.78rem">
-        <option value="">默认</option><option value="name">名称A-Z</option><option value="desc">竞赛分高→低</option>
+        <option value="">分数↓(默认)</option><option value="name">名称A-Z</option><option value="desc">竞赛分高→低</option>
       </select>
       <div class="vt" style="display:flex;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
         <button class="${CV==='grid'?'ac':''}" style="padding:0.3rem 0.5rem;border:none;background:var(--card)" onclick="CV='grid';af()">⬜</button>
@@ -395,7 +412,10 @@ function renderCatalog(m){
       </div>
     </div></div>
     <div class="ld" style="flex-wrap:wrap;margin-bottom:0.5rem">
-      ${GR.map(g=>`<span class="ld"><span class="ld-d" style="background:${g.co};display:inline-block"></span>${g.n}</span>`).join('')}
+      ${GR.map(g=>{
+        const hid=HIDDEN_GRADES.has(g.n);
+        return `<span class="ld" onclick="toggleGradeHide('${g.n}')" style="cursor:pointer;user-select:none;opacity:${hid?'0.35':'1'};text-decoration:${hid?'line-through':'none'};transition:all .2s"><span class="ld-d" style="background:${g.co};display:inline-block"></span>${g.n}${hid?' (隐藏)':''}</span>`;
+      }).join('')}
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.5rem">
       <div class="sb"><input id="cSr" placeholder="搜索..." oninput="af()"/></div>
@@ -422,10 +442,14 @@ function af(){
     if(q&&!x.name.toLowerCase().includes(q))return false;
     if(gr&&gn(x.competition_score)!==gr)return false;
     if(ch&&x.primary_channel!==ch)return false;
+    // 品级隐藏过滤
+    if(HIDDEN_GRADES.has(gn(x.competition_score)))return false;
     return true;
   });
+  // 排序：默认按品级(高→低)+分数(高→低)，即仙品30→28→华品25→珍品23→21→普品14→凡品9
   if(sort==='name')f.sort((a,b)=>a.name.localeCompare(b.name));
   else if(sort==='desc')f.sort((a,b)=>b.competition_score-a.competition_score);
+  else f.sort((a,b)=>b.competition_score-a.competition_score); // 默认：竞赛分从高到低
   document.getElementById('cc').textContent=f.length;
   if(CV==='grid')renderGrid(f);else renderList(f);
   updateFlt();
