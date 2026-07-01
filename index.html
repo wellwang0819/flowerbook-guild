@@ -7,168 +7,331 @@
 <style>
 :root{--bg:#f8faf9;--fg:#0f172a;--card:#fff;--primary:#166534;--secondary:#f1f5f9;--muted:#e2e8f0;--muted-fg:#64748b;--accent:#ca8a04;--border:#e2e8f0;--radius:0.75rem;--danger:#dc2626;--success:#16a34a}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Inter','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--fg);line-height:1.5}
-button{font-family:inherit;cursor:pointer}
-.hdr{position:sticky;top:0;z-index:50;background:#fff8;backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+body{font-family:'Inter','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--fg);line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+/* 头部 */
+.hdr{position:sticky;top:0;z-index:50;background:#fff8;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
 .hdr-in{max-width:80rem;margin:0 auto;padding:0.5rem 1rem;display:flex;align-items:center;gap:0.5rem}
-.logo{font-weight:700;color:var(--primary);font-size:1rem}
-.nav{display:flex;gap:0;overflow-x:auto;scrollbar-width:none;flex:1;margin:0 0.5rem}
+.logo{font-weight:700;color:var(--primary);font-size:1rem;white-space:nowrap;flex-shrink:0}
+.nav{display:flex;gap:0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;flex:1;min-width:0;margin:0 0.4rem}
 .nav::-webkit-scrollbar{display:none}
-.nav a{padding:0.35rem 0.5rem;border-radius:var(--radius);font-size:0.82rem;font-weight:500;color:var(--muted-fg);cursor:pointer;white-space:nowrap;flex-shrink:0}
+.nav a{padding:0.35rem 0.5rem;border-radius:var(--radius);font-size:0.82rem;font-weight:500;color:var(--muted-fg);cursor:pointer;white-space:nowrap;flex-shrink:0;-webkit-tap-highlight-color:transparent}
 .nav a:hover{background:var(--secondary)}
 .nav a.ac{background:#16653418;color:var(--primary)}
-.usr{display:flex;align-items:center;gap:0.4rem;font-size:0.82rem;color:var(--muted-fg)}
-.main{max-width:80rem;margin:0 auto;padding:1rem;padding-bottom:5rem}
-.btn{display:inline-flex;align-items:center;gap:0.3rem;padding:0.4rem 0.85rem;border-radius:var(--radius);font-size:0.85rem;font-weight:500;border:1px solid transparent}
+.usr{display:flex;align-items:center;gap:0.3rem;font-size:0.78rem;color:var(--muted-fg);flex-shrink:0;min-width:0}
+.usr span{max-width:4.5rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block}
+/* 主内容 */
+.main{max-width:80rem;margin:0 auto;padding:1rem;padding-bottom:6rem;min-height:calc(100vh - 60px)}
+/* 按钮 */
+.btn{display:inline-flex;align-items:center;gap:0.3rem;padding:0.4rem 0.85rem;border-radius:var(--radius);font-size:0.85rem;font-weight:500;border:1px solid transparent;white-space:nowrap}
 .btn-p{background:var(--primary);color:#fff}.btn-p:hover{opacity:0.9}
 .btn-g{background:transparent;color:var(--muted-fg);border-color:var(--border)}.btn-g:hover{background:var(--secondary)}
 .btn-d{background:var(--danger);color:#fff}
 .btn-w{background:var(--accent);color:#fff}
 .btn-s{padding:0.25rem 0.5rem;font-size:0.75rem}
-.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:0.75rem}
+/* 卡片 */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:0.75rem;overflow:hidden}
 .card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem}
 .card-h h3{font-size:0.95rem;font-weight:600}
 .tm{color:var(--muted-fg);font-size:0.82rem}
 .ts{font-size:0.82rem}
 .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;gap:0.75rem;flex-wrap:wrap}
-.ph h1{font-size:1.25rem;font-weight:700}
+.ph h1{font-size:1.25rem;font-weight:700;line-height:1.3}
 .ph p{font-size:0.85rem;color:var(--muted-fg)}
-  .iw{width:100%;aspect-ratio:1;border-radius:var(--radius);background:var(--muted);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:0.3rem;padding:0.25rem}
-  .iw img{width:100%;height:100%;object-fit:contain;max-width:100%;max-height:100%}
+/* 花朵图片 */
+.iw{width:100%;aspect-ratio:1;border-radius:var(--radius);background:var(--muted);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:0.3rem;padding:0.25rem}
+.iw img{width:100%;height:100%;object-fit:contain;max-width:100%;max-height:100%}
 .fg{margin-bottom:0.75rem}
 .fg label{display:block;font-size:0.82rem;font-weight:500;margin-bottom:0.3rem}
-.fg input,.fg select,.fg textarea{width:100%;padding:0.45rem 0.65rem;border:1px solid var(--border);border-radius:var(--radius);font-size:0.85rem;outline:none;background:var(--card)}
+.fg input,.fg select,.fg textarea{width:100%;padding:0.45rem 0.65rem;border:1px solid var(--border);border-radius:var(--radius);font-size:0.85rem;outline:none;background:var(--card);-webkit-appearance:none;appearance:none}
 .fg input:focus,.fg select:focus{border-color:var(--primary)}
+.fg select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2364748b'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.55rem center;background-size:10px 6px;padding-right:1.6rem}
 .err{color:var(--danger);font-size:0.8rem;margin-bottom:0.5rem}
-.sb{position:relative;flex:1;min-width:150px}
+.sb{position:relative;flex:1;min-width:140px}
 .sb input{width:100%;padding:0.4rem 0.6rem 0.4rem 2rem;border:1px solid var(--border);border-radius:var(--radius);font-size:0.85rem;outline:none}
+/* 花朵网格 */
 .fgrd{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0.6rem}
-.fcd{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:0.4rem;cursor:pointer}
-.fcd:hover{border-color:var(--primary)}
+.fcd{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:0.4rem;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color .15s}
+.fcd:hover,.fcd:active{border-color:var(--primary)}
 .fn{font-size:0.78rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:0.2rem}
-.st{display:inline-flex;align-items:center;gap:0.2rem;padding:0.12rem 0.4rem;border-radius:999px;font-size:0.7rem;font-weight:600;border:1px solid;cursor:pointer}
+.st{display:inline-flex;align-items:center;gap:0.2rem;padding:0.12rem 0.4rem;border-radius:999px;font-size:0.7rem;font-weight:600;border:1px solid;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .st-ow{background:#16653418;color:var(--primary);border-color:#16653444}
 .st-pl{background:#ca8a0428;color:var(--accent);border-color:#ca8a0444}
 .st-mi{background:#e2e8f0;color:var(--muted-fg);border-color:var(--border)}
 .gt{font-size:0.68rem;padding:0.08rem 0.35rem;border-radius:999px;font-weight:600;display:inline-block}
 .gt-x{background:#dc262618;color:#dc2626}.gt-h{background:#d4a85328;color:#d4a853}.gt-z{background:#7c3aed18;color:#7c3aed}.gt-p{background:#2563eb18;color:#2563eb}.gt-f{background:#16a34a18;color:#16a34a}
-.tbl{width:100%;border-collapse:collapse;font-size:0.82rem;overflow-x:auto;display:block}
-.tbl th,.tbl td{padding:0.4rem 0.6rem;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+/* 表格 */
+.tbl{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tbl table{min-width:100%;width:max-content;border-collapse:collapse;font-size:0.82rem}
+.tbl th,.tbl td{padding:0.45rem 0.65rem;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
 .tbl th{font-weight:600;font-size:0.72rem;color:var(--muted-fg);background:var(--secondary)}
-.mod{position:fixed;inset:0;background:#0006;z-index:100;display:flex;align-items:center;justify-content:center;padding:1rem}
-.mod-in{background:var(--card);border-radius:var(--radius);max-width:32rem;width:100%;max-height:90vh;overflow-y:auto}
-.mod-h{display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;border-bottom:1px solid var(--border)}
+/* 弹窗 */
+.mod{position:fixed;inset:0;background:#0006;z-index:100;display:flex;align-items:center;justify-content:center;padding:1rem;-webkit-overflow-scrolling:touch}
+.mod-in{background:var(--card);border-radius:var(--radius);max-width:32rem;width:100%;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.mod-h{display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;border-bottom:1px solid var(--border);flex-shrink:0}
 .mod-b{padding:1rem}
+/* 其他 */
 .ftr{text-align:center;padding:1.5rem;font-size:0.78rem;color:var(--muted-fg);border-top:1px solid var(--border);margin-top:2rem}
-.ld{display:flex;align-items:center;gap:0.25rem;font-size:0.78rem;color:var(--muted-fg)}
+.ld{display:flex;align-items:center;gap:0.25rem;font-size:0.78rem;color:var(--muted-fg);flex-wrap:wrap}
 .ld-d{width:0.55rem;height:0.55rem;border-radius:999px}
-.cb{display:inline-flex;padding:0.15rem 0.4rem;border-radius:999px;font-size:0.72rem;gap:0.2rem;border:1px solid var(--border);background:var(--card);color:var(--muted-fg);cursor:pointer}
+.cb{display:inline-flex;padding:0.15rem 0.4rem;border-radius:999px;font-size:0.72rem;gap:0.2rem;border:1px solid var(--border);background:var(--card);color:var(--muted-fg);cursor:pointer;white-space:nowrap}
 .cb.ac,.cb:hover{background:#16653418;color:var(--primary);border-color:#16653444}
-.flt{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);padding:0.5rem 1rem;z-index:60;display:flex;align-items:center;justify-content:space-between;box-shadow:0 -4px 12px #0000000c}
+.flt{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);padding:0.5rem 1rem;z-index:60;display:flex;align-items:center;justify-content:space-between;box-shadow:0 -4px 12px #0000000c;box-sizing:border-box}
 .flt .fi{font-size:0.82rem;color:var(--muted-fg)}
 .flt .fi strong{color:var(--primary)}
 .mpg{display:flex;align-items:center;gap:0.5rem}
-.mpg .bar{flex:1;height:0.35rem;background:var(--muted);border-radius:999px;overflow:hidden}
+.mpg .bar{flex:1;height:0.35rem;background:var(--muted);border-radius:999px;overflow:hidden;min-width:0}
 .mpg .bar .fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--primary),var(--accent))}
+/* 登录页 */
 .auth-pg{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem;background:radial-gradient(ellipse 120% 80% at 50% -20%,#16653418,transparent 55%)}
-.auth-cd{width:100%;max-width:26rem;background:var(--card);border-radius:calc(var(--radius)*2);border:1px solid var(--border);padding:2rem;box-shadow:0 25px 50px -12px #0000001a}
+.auth-cd{width:100%;max-width:26rem;background:var(--card);border-radius:calc(var(--radius)*2);border:1px solid var(--border);padding:2rem 1.5rem;box-shadow:0 25px 50px -12px #0000001a}
 .auth-cd h1{text-align:center;font-size:1.4rem;color:var(--primary);margin-bottom:0.25rem}
-.mli{max-height:18rem;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:0.75rem}
-.mit{display:flex;align-items:center;gap:0.5rem;padding:0.45rem 0.6rem;cursor:pointer;border-bottom:1px solid #e2e8f080}
+.mli{max-height:18rem;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:0.75rem;-webkit-overflow-scrolling:touch}
+.mit{display:flex;align-items:center;gap:0.5rem;padding:0.45rem 0.6rem;cursor:pointer;border-bottom:1px solid #e2e8f080;-webkit-tap-highlight-color:transparent}
 .mit:last-child{border-bottom:none}
 .mit:hover,.mit.sel{background:#1665340c}
-.mit .av{width:1.8rem;height:1.8rem;border-radius:999px;background:#16653418;color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700}
-.mit .nm{flex:1;font-size:0.85rem;font-weight:500}
-.mit .rl{font-size:0.68rem;padding:0.06rem 0.3rem;border-radius:999px;font-weight:600}
-/* ===== 手机端适配（≤768px）===== */
+.mit .av{width:1.8rem;height:1.8rem;border-radius:999px;background:#16653418;color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;flex-shrink:0}
+.mit .nm{flex:1;font-size:0.85rem;font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mit .rl{font-size:0.68rem;padding:0.06rem 0.3rem;border-radius:999px;font-weight:600;flex-shrink:0}
+
+/* ===== Pad端适配（768px ~ 1023px）===== */
+@media(min-width:768px) and (max-width:1023px){
+  body{font-size:15px}
+  .main{padding:0.7rem;padding-bottom:5.5rem}
+  .hdr-in{padding:0.4rem 0.8rem;gap:0.35rem}
+  .logo{font-size:0.94rem}
+  .nav a{padding:0.28rem 0.45rem;font-size:0.76rem}
+  .ph h1{font-size:1.15rem}
+  .card{padding:0.85rem;margin-bottom:0.65rem}
+  .card-h h3{font-size:0.9rem}
+  /* pad端花朵网格：5列 */
+  .fgrd{grid-template-columns:repeat(5,1fr);gap:0.5rem}
+  .fcd{padding:0.38rem}
+  .fn{font-size:0.74rem}
+  .st{font-size:0.66rem}
+  .gt{font-size:0.64rem}
+  /* pad表格 */
+  .tbl table{font-size:0.78rem}
+  .tbl th,.tbl td{padding:0.38rem 0.55rem}
+  /* pad弹窗 */
+  .mod-in{max-height:88vh}
+  /* pad登录 */
+  .auth-cd{padding:1.7rem 1.3rem;max-width:24rem}
+  /* pad用户信息 */
+  .usr span{max-width:6rem}
+  .usr{font-size:0.8rem}
+  /* pad底部栏 */
+  .flt{padding:0.45rem 0.85rem}
+  /* pad筛选栏 */
+  .sb{min-width:120px}
+  /* pad按钮 */
+  .btn-s{font-size:0.72rem}
+  /* pad成员列表进度条保持横向 */
+  .mpg .bar{height:0.32rem}
+  /* pad品级标签 */
+  .ld{font-size:0.76rem}
+  .cb{font-size:0.7rem}
+  .ftr{font-size:0.76rem}
+}
+
+/* ===== 手机端适配（≤767px）===== */
 @media(max-width:767px){
   /* 整体布局 */
   body{font-size:14px}
-  .main{padding:0.4rem;padding-bottom:5rem}
+  .main{padding:0.35rem 0.4rem;padding-bottom:5.5rem}
 
   /* 头部导航 */
-  .hdr-in{padding:0.3rem 0.4rem;gap:0.25rem}
-  .logo{font-size:0.88rem;flex-shrink:0}
-  .nav{margin:0 0.2rem;gap:0}
-  .nav a{padding:0.2rem 0.35rem;font-size:0.7rem;border-radius:0.5rem}
+  .hdr{position:-webkit-sticky;position:sticky;top:0;z-index:50}
+  .hdr-in{padding:0.25rem 0.35rem;gap:0.2rem}
+  .logo{font-size:0.82rem}
+  .nav{margin:0 0.15rem;gap:0}
+  .nav a{padding:0.18rem 0.32rem;font-size:0.65rem;border-radius:0.5rem;line-height:1.4}
+
+  /* 用户信息区：隐藏名称只显示退出按钮，或精简显示 */
+  .usr{gap:0.2rem;max-width:auto;font-size:0.7rem}
+  .usr span{max-width:2.8rem;font-size:0.65rem}
+  .usr .btn{padding:0.2rem 0.35rem;font-size:0.62rem}
 
   /* 页面标题区 */
-  .ph{flex-direction:column;align-items:flex-start;margin-bottom:0.75rem;gap:0.3rem}
-  .ph h1{font-size:1rem;line-height:1.3}
-  .ph p{font-size:0.78rem}
+  .ph{flex-direction:column;align-items:flex-start;margin-bottom:0.6rem;gap:0.2rem}
+  .ph h1{font-size:0.96rem;line-height:1.3}
+  .ph p{font-size:0.75rem}
+  .ph>div:last-child{align-self:stretch;width:100%}
+  .ph>div:last-child>*{width:100%!important}
 
   /* 卡片容器 */
-  .card{border-radius:0.6rem;padding:0.7rem;margin-bottom:0.5rem}
-  .card-h{margin-bottom:0.5rem;gap:0.35rem}
-  .card-h h3{font-size:0.88rem}
+  .card{border-radius:0.6rem;padding:0.55rem;margin-bottom:0.4rem}
+  .card-h{margin-bottom:0.45rem;gap:0.3rem;flex-wrap:wrap}
+  .card-h h3{font-size:0.84rem}
 
   /* 花朵网格 - 手机2列紧凑布局 */
-  .fgrd{grid-template-columns:repeat(2,1fr);gap:0.35rem}
-  .fcd{padding:0.35rem;border-radius:0.6rem}
-  .iw{border-radius:0.5rem;padding:0.2rem;margin-bottom:0.25rem}
-  .fn{font-size:0.72rem;margin-bottom:0.15rem}
-  .st{font-size:0.62rem;padding:0.08rem 0.3rem}
+  .fgrd{grid-template-columns:repeat(2,1fr)!important;gap:0.3rem!important}
+  .fcd{padding:0.3rem!important;border-radius:0.55rem!important}
+  .iw{border-radius:0.45rem!important;padding:0.18rem!important;margin-bottom:0.2rem!important}
+  .fn{font-size:0.68rem!important;margin-bottom:0.12rem!important;line-height:1.25}
+  .st{font-size:0.58rem!important;padding:0.06rem 0.25rem!important}
 
   /* 品级标签 */
-  .gt{font-size:0.62rem;padding:0.06rem 0.28rem}
+  .gt{font-size:0.58rem!important;padding:0.05rem 0.22rem!important}
 
-  /* 表格 - 横向滚动 */
-  .tbl{font-size:0.68rem;overflow-x:auto;-webkit-overflow-scrolling:touch}
-  .tbl table{min-width:100%}
-  .tbl th,.tbl td{padding:0.3rem 0.4rem}
-  .tbl th{font-size:0.65rem;white-space:nowrap}
+  /* 表格 - 确保横向滚动生效 */
+  .tbl{font-size:0.62rem!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .tbl table{min-width:100%!important;font-size:0.62rem!important}
+  .tbl th,.tbl td{padding:0.22rem 0.3rem!important;font-size:0.58rem!important}
+  .tbl th{font-size:0.56rem!important;white-space:nowrap!important}
 
   /* 表单 */
-  .fg label{font-size:0.78rem}
-  .fg input,.fg select,.fg textarea{padding:0.38rem 0.55rem;font-size:0.82rem}
+  .fg{margin-bottom:0.55rem}
+  .fg label{font-size:0.74rem;margin-bottom:0.2rem}
+  .fg input,.fg select,.fg textarea{padding:0.32rem 0.5rem!important;font-size:0.8rem!important;border-radius:0.55rem!important}
+  .fg select{background-position:right 0.5rem center!important;background-size:9px 5px!important;padding-right:1.4rem!important}
 
   /* 按钮 */
-  .btn{padding:0.35rem 0.7rem;font-size:0.8rem}
-  .btn-s{padding:0.2rem 0.4rem;font-size:0.68rem}
+  .btn{padding:0.3rem 0.6rem!important;font-size:0.76rem!important;border-radius:0.55rem!important}
+  .btn-s{padding:0.18rem 0.35rem!important;font-size:0.65rem!important}
 
   /* 底部浮动栏 */
-  .flt{flex-direction:row;flex-wrap:wrap;gap:0.35rem;padding:0.4rem 0.6rem;border-radius:0.75rem 0.75rem 0 0}
-  .flt .fi{font-size:0.75rem}
+  .flt{flex-direction:row;flex-wrap:nowrap;gap:0.3rem;padding:0.35rem 0.5rem!important;border-radius:0.7rem 0.7rem 0 0!important;box-sizing:border-box}
+  .flt .fi{font-size:0.7rem!important}
+  .flt .btn{padding:0.25rem 0.5rem!important;font-size:0.7rem!important;flex-shrink:0}
 
   /* 登录页面 */
-  .auth-cd{padding:1.3rem 1rem;border-radius:1.25rem}
-  .auth-cd h1{font-size:1.2rem}
-  .mit{padding:0.35rem 0.5rem}
-  .mit .av{width:1.6rem;height:1.6rem;font-size:0.68rem}
-  .mit .nm{font-size:0.8rem}
+  .auth-pg{padding:0.5rem;align-items:flex-start;padding-top:2rem}
+  .auth-cd{padding:1.1rem 0.8rem!important;border-radius:1rem!important;box-shadow:0 10px 30px -8px #00000015}
+  .auth-cd h1{font-size:1.15rem!important}
+  .auth-cd button{padding:0.5rem!important;font-size:0.88rem!important}
+  .mli{max-height:15rem;margin-bottom:0.6rem}
+  .mit{padding:0.3rem 0.4rem}
+  .mit .av{width:1.5rem;height:1.5rem;font-size:0.64rem}
+  .mit .nm{font-size:0.76rem}
+  .mit .rl{font-size:0.62rem}
 
-  /* 弹窗 */
-  .mod{padding:0.6rem}
-  .mod-in{border-radius:0.85rem;max-height:92vh}
-  .mod-h{padding:0.6rem 0.8rem}
-  .mod-b{padding:0.8rem}
+  /* 弹窗 - 手机端几乎全屏 */
+  .mod{padding:0.4rem}
+  .mod-in{border-radius:0.75rem!important;max-height:93vh!important;width: calc(100% - 0.8rem)!important;max-width:100%!important}
+  .mod-h{padding:0.5rem 0.7rem!important}
+  .mod-h h2{font-size:0.92rem!important}
+  .mod-b{padding:0.65rem!important}
 
-  /* 成员列表项 */
-  .mpg{flex-direction:column;align-items:flex-start;gap:0.25rem}
-  .mpg .bar{width:100%;height:0.3rem}
+  /* 成员列表项 - 进度条纵向 */
+  .mpg{flex-direction:column!important;align-items:stretch!important;gap:0.2rem!important;width:100%!important}
+  .mpg .bar{width:100%!important;height:0.28rem!important}
 
   /* 文字辅助 */
-  .tm,.ts{font-size:0.76rem}
-  .err{font-size:0.74rem}
-
-  /* 用户信息区 - 手机端省略长名称 */
-  .usr{max-width:5rem;flex-shrink:0}
-  .usr span{max-width:3rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block}
+  .tm,.ts{font-size:0.72rem!important}
+  .err{font-size:0.7rem!important}
 
   /* 搜索框 */
-  .sb{min-width:100px}
+  .sb{min-width:0!important;flex:1!important}
 
-  /* 筛选栏 - 手机端换行 */
-  select[style*="padding"]{padding:0.3rem 0.4rem!important;font-size:0.75rem!important}
+  /* 品级/图例标签行 */
+  .ld{font-size:0.68rem!important;gap:0.2rem!important}
+  .ld-d{width:0.45rem!important;height:0.45rem!important}
+  .cb{font-size:0.62rem!important;padding:0.1rem 0.28rem!important}
 
-  /* 隐藏/调整部分桌面元素 */
-  .ftr{padding:1rem;font-size:0.72rem;margin-top:1.25rem}
-  .ld{font-size:0.72rem}
-  .cb{font-size:0.66rem;padding:0.12rem 0.32rem}
+  /* 页脚 */
+  .ftr{padding:0.8rem 0.5rem!important;font-size:0.68rem!important;margin-top:1rem!important}
+
+  /* 视图切换按钮组（网格/列表） */
+  .vt{border-radius:0.5rem!important;overflow:hidden!important}
+  .vt button{padding:0.25rem 0.4rem!important;font-size:0.8rem!important}
+
+  /* 我的花册 - 小花朵卡片grid */
+  [style*="grid-template-columns:repeat(auto-fill,minmax(70px"]{
+    grid-template-columns:repeat(auto-fill,minmax(58px,1fr))!important;
+    gap:0.2rem!important;
+  }
+  [style*="grid-template-columns:repeat(auto-fill,minmax(70px"] > div{
+    padding:0.18rem!important;
+    border-width:0.5px!important;
+  }
+
+  /* 统计页 - 品级覆盖卡片grid */
+  [style*="grid-template-columns:repeat(auto-fill,minmax(120px"]{
+    grid-template-columns:repeat(2,1fr)!important;
+    gap:0.4rem!important;
+  }
+
+  /* 统计页 - 成员排行表格 */
+  .mod-b table{table-layout:fixed!important}
+
+  /* 竞赛助手 - 目标达成 grid 2列改单列 */
+  [style*="grid-template-columns:repeat(2,1fr)"],
+  [style*="grid-template-columns:repeat(3,1fr)"]{
+    grid-template-columns:1fr!important;
+    gap:0.4rem!important;
+  }
+
+  /* 设置页 - 密码/账号按钮组 */
+  .card .btn-s{margin-top:0.15rem}
+
+  /* 图鉴覆盖矩阵 - 强制可滚动 */
+  [style*="overflow-x:auto"]{overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+
+  /* 缺花分析 - 标签换行 */
+  [style*="font-size:0.7rem;padding:0.1rem 0.35rem"]{
+    font-size:0.6rem!important;
+    padding:0.08rem 0.25rem!important;
+    display:inline-block!important;
+    margin:0.08rem 0.05rem 0 0!important;
+  }
+
+  /* 管理员面板按钮 */
+  #admPanel .btn{margin:0.15rem 0.2rem 0 0}
+
+  /* 任务匹配已选标签 */
+  [style*="background:var(--secondary);border-radius:999px"]{
+    font-size:0.65rem!important;
+    padding:0.08rem 0.3rem!important;
+  }
+
+  /* 花册页标题区的工具栏 */
+  .ph[style*="display:flex"] div[style*="display:flex"]{
+    flex-wrap:wrap!important;
+    gap:0.25rem!important;
+  }
+  .ph[style*="display:flex"] select{
+    flex:1!important;min-width:70px!important;max-width:120px!important
+  }
+
+  /* od详情弹窗图片 */
+  .mod-b [style*="width:8rem"]{
+    width:6rem!important;height:6rem!important;
+  }
+  .mod-b [style*="text-align:center;font-size:1.1rem"]{
+    font-size:0.95rem!important;
+  }
+  .mod-b [style*="display:grid;grid-template-columns:auto 1fr"]{
+    font-size:0.8rem!important;
+    gap:0.25rem 0.6rem!important;
+  }
+  .mod-b [style*="display:flex;gap:0.5rem;margin-top:1rem"][style*="center"]{
+    margin-top:0.6rem!important;flex-wrap:wrap!important;
+  }
+
+  /* 状态选择弹窗选项 */
+  .mod-b [style*="padding:0.6rem 1rem"]{
+    padding:0.5rem 0.7rem!important;font-size:0.88rem!important;
+  }
+
+  /* 防止水平溢出 */
+  html,body,#page{overflow-x:hidden;max-width:100vw}
+  .main{max-width:100vw;overflow-x:hidden}
+  .card{word-wrap:break-word;overflow-wrap:break-word}
 }
-@media(min-width:768px) and (max-width:1023px){.fgrd{grid-template-columns:repeat(5,1fr)}}
-@media(min-width:1024px) and (max-width:1279px){.fgrd{grid-template-columns:repeat(6,1fr)}}
-@media(min-width:1280px){.fgrd{grid-template-columns:repeat(8,1fr);max-width:90rem}}
+
+/* ===== 大屏PC（≥1280px）===== */
+@media(min-width:1280px){
+  .fgrd{grid-template-columns:repeat(8,1fr);max-width:90rem}
+}
+/* ===== 中屏PC（1024~1279px）===== */
+@media(min-width:1024px) and (max-width:1279px){
+  .fgrd{grid-template-columns:repeat(6,1fr)}
+}
+
+/* ===== 安全网：确保所有断点都有基础网格 ===== */
+@media(min-width:1024px){.fgrd{gap:0.55rem}}
 </style>
 </head>
 <body>
@@ -415,27 +578,27 @@ function save(){
 function renderCatalog(m){
   const channels=[...new Set(FL.map(f=>f.primary_channel).filter(Boolean))].sort();
   let html=`<div class="ph"><div><h1>🌸 花卉图鉴</h1><p>收录 ${FL.length} 种花·点击标记</p></div>
-    <div style="display:flex;gap:0.35rem;flex-wrap:wrap">
-      <select onchange="af()" id="cSort" style="padding:0.35rem 0.5rem;border:1px solid var(--border);border-radius:var(--radius);font-size:0.78rem">
+    <div class="catalog-toolbar" style="display:flex;gap:0.3rem;flex-wrap:wrap;align-items:center">
+      <select onchange="af()" id="cSort" class="catalog-select" style="padding:0.35rem 0.5rem;padding-right:1.6rem;border:1px solid var(--border);border-radius:var(--radius);font-size:0.78rem;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2364748b'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 0.4rem center;background-size:10px 6px;-webkit-appearance:none;appearance:none">
         <option value="">分数↓(默认)</option><option value="name">名称A-Z</option><option value="desc">竞赛分高→低</option>
       </select>
-      <div class="vt" style="display:flex;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+      <div class="vt" style="display:flex;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;flex-shrink:0">
         <button class="${CV==='grid'?'ac':''}" style="padding:0.3rem 0.5rem;border:none;background:var(--card)" onclick="CV='grid';af()">⬜</button>
         <button class="${CV==='list'?'ac':''}" style="padding:0.3rem 0.5rem;border:none;background:var(--card)" onclick="CV='list';af()">☰</button>
       </div>
     </div></div>
-    <div class="ld" style="flex-wrap:wrap;margin-bottom:0.5rem">
+    <div class="ld grade-legend" style="flex-wrap:wrap;margin-bottom:0.5rem">
       ${GR.map(g=>{
         const hid=HIDDEN_GRADES.has(g.n);
-        return `<span class="ld" onclick="toggleGradeHide('${g.n}')" style="cursor:pointer;user-select:none;opacity:${hid?'0.35':'1'};text-decoration:${hid?'line-through':'none'};transition:all .2s"><span class="ld-d" style="background:${g.co};display:inline-block"></span>${g.n}${hid?' (隐藏)':''}</span>`;
+        return `<span class="ld" onclick="toggleGradeHide('${g.n}')" style="cursor:pointer;user-select:none;opacity:${hid?'0.35':'1'};text-decoration:${hid?'line-through':'none'};transition:all .2s;-webkit-tap-highlight-color:transparent"><span class="ld-d" style="background:${g.co};display:inline-block"></span>${g.n}${hid?' (隐藏)':''}</span>`;
       }).join('')}
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.5rem">
-      <div class="sb"><input id="cSr" placeholder="搜索..." oninput="af()"/></div>
-      <select onchange="af()" id="cGr" style="padding:0.3rem 0.5rem;border:1px solid var(--border);border-radius:var(--radius);font-size:0.78rem">
+    <div class="filter-bar" style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.5rem">
+      <div class="sb" style="min-width:120px;flex:1"><input id="cSr" placeholder="搜索..." oninput="af()"/></div>
+      <select onchange="af()" id="cGr" class="filter-select" style="padding:0.32rem 0.45rem;padding-right:1.5rem;border:1px solid var(--border);border-radius:var(--radius);font-size:0.76rem;-webkit-appearance:none;appearance:none;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2364748b'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 0.35rem center;background-size:9px 5px;flex:1;max-width:140px">
         <option value="">全部</option>${GR.map(g=>`<option value="${g.n}">${g.n}</option>`).join('')}
       </select>
-      <select onchange="af()" id="cCh" style="padding:0.3rem 0.5rem;border:1px solid var(--border);border-radius:var(--radius);font-size:0.78rem">
+      <select onchange="af()" id="cCh" class="filter-select" style="padding:0.32rem 0.45rem;padding-right:1.5rem;border:1px solid var(--border);border-radius:var(--radius);font-size:0.76rem;-webkit-appearance:none;appearance:none;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2364748b'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right 0.35rem center;background-size:9px 5px;flex:1;max-width:140px">
         <option value="">全部渠道</option>${channels.map(c=>`<option value="${c}">${c}</option>`).join('')}
       </select>
     </div>
@@ -561,7 +724,7 @@ function renderMy(m){
     const ps=FL.filter(f=>OW[f.id]==='planting'&&g.sc.includes(f.competition_score));
     tot+=fs.length;totSc+=fs.reduce((s,f)=>s+(f.competition_score||0),0);
     return `<div class="card"><div class="card-h"><span class="gt ${g.c}" style="font-size:0.85rem;padding:0.15rem 0.5rem">${g.n}</span><span>${fs.length}朵 · 🏆${fs.reduce((s,f)=>s+(f.competition_score||0),0)}分${ps.length?` · 🌱${ps.length}朵种植中`:''}</span></div>
-      ${fs.length?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:0.3rem;max-height:250px;overflow-y:auto">${fs.map(f=>`<div style="border:1px solid var(--border);border-radius:0.4rem;padding:0.25rem;text-align:center;cursor:pointer" onclick="od('${f.id}')"><div style="font-size:0.65rem;overflow:hidden;text-overflow:ellipsis">${esc(f.name)}</div><span style="font-size:0.6rem;color:${g.co}">🏆${f.competition_score}</span></div>`).join('')}</div>`:'<div class="tm" style="padding:0.5rem;text-align:center">暂无此品级花朵</div>'}
+      ${fs.length?`<div class="my-flower-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:0.3rem;max-height:250px;overflow-y:auto;-webkit-overflow-scrolling:touch">${fs.map(f=>`<div style="border:1px solid var(--border);border-radius:0.4rem;padding:0.25rem;text-align:center;cursor:pointer" onclick="od('${f.id}')"><div style="font-size:0.65rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(f.name)}</div><span style="font-size:0.6rem;color:${g.co}">🏆${f.competition_score}</span></div>`).join('')}</div>`:'<div class="tm" style="padding:0.5rem;text-align:center">暂无此品级花朵</div>'}
     </div>`;
   }).join('');
   // 调试信息（帮助排查数据问题）
@@ -587,12 +750,12 @@ function renderMembers(m){
   });
   ml.sort((a,b)=>b.score-a.score);
   m.innerHTML=`<div class="ph"><div><h1>👥 成员总览</h1></div></div>
-    ${ml.map((x,i)=>`<div class="card"><div style="display:flex;align-items:center;gap:0.75rem">
-      <div class="av" style="width:2.5rem;height:2.5rem;font-size:1rem">${(x.n.match(/\.(.+)/)?.[1]||x.n)[0]}</div>
-      <div style="flex:1"><div style="font-weight:600">${esc(x.n)} ${i===0?'👑':''} ${x.n===ME.n?'<span class="tm">(我)</span>':''}</div>
-        <div class="tm ts">${x.rn} Lv${x.l} | ✅${x.owned} 🌱${x.planting} | 🏆${x.score}分</div></div>
-      <div style="text-align:right"><div style="font-size:1.1rem;font-weight:700;color:var(--primary)">${x.pct}%</div><div class="tm ts">${x.total}/${FL.length}</div></div>
-    </div><div class="mpg" style="margin-top:0.5rem"><div class="bar"><div class="fill" style="width:${x.pct}%"></div></div></div></div>`).join('')}
+    ${ml.map((x,i)=>`<div class="card member-card"><div style="display:flex;align-items:center;gap:0.6rem">
+      <div class="av" style="width:2.5rem;height:2.5rem;font-size:1rem;flex-shrink:0">${(x.n.match(/\.(.+)/)?.[1]||x.n)[0]}</div>
+      <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:0.88rem">${esc(x.n)} ${i===0?'👑':''} ${x.n===ME.n?'<span class="tm">(我)</span>':''}</div>
+        <div class="tm ts" style="font-size:0.76rem">${x.rn} Lv${x.l} | ✅${x.owned} 🌱${x.planting} | 🏆${x.score}分</div></div>
+      <div style="text-align:right;flex-shrink:0"><div style="font-size:1.1rem;font-weight:700;color:var(--primary)">${x.pct}%</div><div class="tm ts" style="font-size:0.7rem">${x.total}/${FL.length}</div></div>
+    </div><div class="mpg" style="margin-top:0.45rem"><div class="bar"><div class="fill" style="width:${x.pct}%"></div></div></div></div>`).join('')}
     ${!ml.length?'<div class="card" style="text-align:center;padding:2rem;color:var(--muted-fg)">暂无成员数据</div>':''}`;
 }
 
@@ -633,7 +796,7 @@ function renderStats(m){
       </tbody></table></div>
     </div>
     <div class="card"><div class="card-h"><h3>📊 品级覆盖</h3><div class="tm ts">公会覆盖率 ${allIds.size}/${FL.length} (${FL.length?Math.round(allIds.size/FL.length*100):0}%)</div></div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:0.5rem">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:0.5rem" class="cov-grid">
       ${GR.map(g=>{const fs=FL.filter(f=>g.sc.includes(f.competition_score));const ow=fs.filter(f=>allIds.has(f.id));return `<div style="text-align:center;padding:0.5rem;border:1px solid var(--border);border-radius:var(--radius)"><span class="gt ${g.c}" style="font-size:0.78rem">${g.n}</span><div style="font-size:1.2rem;font-weight:700;color:var(--primary)">${ow.length}/${fs.length}</div><div class="mpg" style="margin-top:0.35rem"><div class="bar"><div class="fill" style="width:${fs.length?Math.round(ow.length/fs.length*100):0}%"></div></div></div></div>`}).join('')}
       </div>
     </div>
@@ -773,7 +936,7 @@ function calcGoal(){
   r.innerHTML=`<div class="card">
     <div class="card-h"><h3>📊 ${goal.name} 达成策略</h3><span class="tm ts">${esc(memberNick)}</span></div>
     
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.5rem;margin-bottom:1rem">
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.5rem;margin-bottom:1rem">
       <div style="text-align:center;padding:0.6rem;border:1px solid var(--border);border-radius:var(--radius)">
         <div style="font-size:1.4rem;font-weight:700;color:var(--primary)">${ownedScore}</div>
         <div class="tm ts">已拥有总分</div>
@@ -784,7 +947,7 @@ function calcGoal(){
       </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;margin-bottom:1rem">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;margin-bottom:1rem" class="goal-stats-row">
       <div style="text-align:center;padding:0.5rem;background:var(--secondary);border-radius:var(--radius)"><div style="font-size:1.2rem;font-weight:700">${ownedFlowers.length}</div><div class="tm ts">已拥有</div></div>
       <div style="text-align:center;padding:0.5rem;background:var(--secondary);border-radius:var(--radius)"><div style="font-size:1.2rem;font-weight:700">${goal.tasks}</div><div class="tm ts">需要任务数</div></div>
       <div style="text-align:center;padding:0.5rem;background:var(--secondary);border-radius:var(--radius)"><div style="font-size:1.2rem;font-weight:700;color:${ownedFlowers.length>=goal.tasks?'var(--success)':'var(--accent)'}">${Math.max(0,goal.tasks-ownedFlowers.length)}</div><div class="tm ts">还需花朵</div></div>
