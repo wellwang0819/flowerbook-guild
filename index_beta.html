@@ -289,17 +289,18 @@ function handleLogin(){
   localStorage.setItem('fbp',JSON.stringify(m));
   // 从localStorage加载花朵状态
   try{OW=JSON.parse(localStorage.getItem('fbo_'+m.n))||{}}catch(e){OW={}}
-  // 【修复】如果个人数据为空但全员数据中有该成员，同步过来
-  if(!OW||Object.keys(OW).length===0){
-    try{ALL_OW=JSON.parse(localStorage.getItem('fbo_all'))||{}}catch(e){ALL_OW={}}
-    if(ALL_OW[m.n]&&Object.keys(ALL_OW[m.n]).length>0){
-      OW={...ALL_OW[m.n]};
+  // 【修复】从全员数据同步：合并策略——ALL_OW中有但OW中没有的，补进去
+  try{ALL_OW=JSON.parse(localStorage.getItem('fbo_all'))||{}}catch(e){ALL_OW={}}
+  if(ALL_OW[m.n]&&Object.keys(ALL_OW[m.n]).length>0){
+    let changed=false;
+    Object.entries(ALL_OW[m.n]).forEach(([fid,st])=>{
+      if(!OW[fid]){OW[fid]=st;changed=true;}
+    });
+    if(changed){
       localStorage.setItem('fbo_'+m.n, JSON.stringify(OW));
-      console.log('📥 已从全员数据同步 '+m.n+' 的花册（'+Object.keys(OW).length+'朵）');
+      console.log('📥 已从全员数据合并到 '+m.n+' 的花册（共'+Object.keys(OW).length+'朵）');
     }
   }
-  // 加载全员状态
-  try{ALL_OW=JSON.parse(localStorage.getItem('fbo_all'))||{}}catch(e){ALL_OW={}}
   if(!ALL_OW[m.n])ALL_OW[m.n]={};
   afterLogin();
 }
@@ -534,6 +535,14 @@ function cm(){document.getElementById('mod').style.display='none'}
 
 // ===== 我的花册 =====
 function renderMy(m){
+  // 【关键兜底】每次渲染时确保OW有数据——从ALL_OW实时同步
+  if(!OW||Object.keys(OW).length===0){
+    try{ALL_OW=JSON.parse(localStorage.getItem('fbo_all'))||{}}catch(e){ALL_OW={}}
+    if(ME&&ALL_OW[ME.n]&&Object.keys(ALL_OW[ME.n]).length>0){
+      OW={...ALL_OW[ME.n]};
+      console.log('🔄 renderMy兜底同步: '+ME.n+' ('+Object.keys(OW).length+'朵)');
+    }
+  }
   let tot=0,totSc=0;
   const html=GR.map(g=>{
     const fs=FL.filter(f=>OW[f.id]==='owned'&&g.sc.includes(f.competition_score));
@@ -1191,9 +1200,19 @@ function initMemberFlowers(){
     try{
       const parsed = JSON.parse(existing);
       if(parsed && Object.keys(parsed).length > 0){
-        // 已有数据，直接加载，不做任何覆盖
+        // 已有数据，直接加载
         ALL_OW = parsed;
         console.log('✅ 检测到已有成员数据，跳过初始化（'+Object.keys(parsed).length+'个成员）');
+        // 【迁移修复】检查每个成员的个人数据fbo_xxx是否存在，不存在则从fbo_all补写
+        let migrated=0;
+        Object.keys(ALL_OW).forEach(nick=>{
+          const personalData=localStorage.getItem('fbo_'+nick);
+          if(!personalData||personalData==='{}'||personalData===''){
+            localStorage.setItem('fbo_'+nick, JSON.stringify(ALL_OW[nick]));
+            migrated++;
+          }
+        });
+        if(migrated>0)console.log('🔧 迁移修复：补写了 '+migrated+' 个成员的个人数据(fbo_xxx)');
         return;
       }
     }catch(e){/* 解析失败则继续初始化 */}
