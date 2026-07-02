@@ -613,6 +613,7 @@ let _syncing=false; // 防止并发同步
 
 // 从GitHub拉取云端数据
 async function fetchRemoteData(){
+  if(!SYNC_CFG.token)return null;
   try{
     const req=new Request(`https://api.github.com/repos/${SYNC_CFG.repo}/contents/${SYNC_CFG.path}`);
     req.headers.set('Authorization',`Bearer ${SYNC_CFG.token}`);
@@ -626,7 +627,7 @@ async function fetchRemoteData(){
 
 // 推送数据到GitHub（带SHA乐观锁）
 async function pushRemoteData(retryCount){
-  if(_syncing)return;_syncing=true;
+  if(_syncing||!SYNC_CFG.token)return;_syncing=true;
   try{
     retryCount=retryCount||0;
     // 先获取当前SHA
@@ -1235,6 +1236,15 @@ function renderSettings(m){
         <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)"/>
       </div>
     </div>
+    <div class="card"><div class="card-h"><h3>☁️ 云端同步</h3></div>
+      <div class="tm ts mb2" id="syncCfgTip">${SYNC_CFG.token?'✅ 已配置同步Token':'⚠️ 未配置同步Token，数据仅保存在本地浏览器'}</div>
+      <div style="display:flex;gap:0.35rem;align-items:center;flex-wrap:wrap">
+        <input type="password" id="syncTokInp" placeholder="输入GitHub Token..." style="flex:1;min-width:150px;padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--fg);font-size:0.8rem"/>
+        <button class="btn btn-p btn-s" onclick="doSetSyncToken()">保存</button>
+        ${SYNC_CFG.token?'<button class="btn btn-d btn-s" onclick="doRmSyncToken()">清除</button>':''}
+      </div>
+      <div class="tm ts" style="margin-top:0.4rem;font-size:0.7rem">💡 配置Token后，填花数据将自动同步到云端，多设备/多成员间实时共享。由管理员统一分发。</div>
+    </div>
     ${isAdm(ME)?`<div class="card"><div class="card-h"><h3>👑 管理员面板</h3></div><div id="admPanel"></div></div>`:''}`;
   if(isAdm(ME))loadAdm();
 }
@@ -1255,6 +1265,21 @@ function rmPwd(){
   document.getElementById('modB').innerHTML=`<p class="tm">取消后任何人选择你的昵称即可进入</p><div style="display:flex;gap:0.5rem;justify-content:center;margin-top:1rem"><button class="btn btn-g" onclick="cm()">取消</button><button class="btn btn-d" onclick="doRmPwd()">确认取消</button></div>`;
 }
 function doRmPwd(){localStorage.removeItem('fbpwd_'+ME.n);cm();toast('密码已取消');renderSettings(document.getElementById('main'))}
+function doSetSyncToken(){
+  const t=document.getElementById('syncTokInp').value.trim();
+  if(!t||t.length<10){toast('Token格式不正确','error');return}
+  SYNC_CFG.setToken(t);
+  toast('✅ 同步Token已保存');
+  renderSettings(document.getElementById('main'));
+  // 立即尝试同步
+  syncOnLogin();
+}
+function doRmSyncToken(){
+  SYNC_CFG.setToken('');
+  localStorage.removeItem('fb_sync_token');
+  toast('同步Token已清除');
+  renderSettings(document.getElementById('main'));
+}
 function confirmReset(){
   document.getElementById('mod').style.display='flex';
   document.getElementById('modT').textContent='确认重置';
