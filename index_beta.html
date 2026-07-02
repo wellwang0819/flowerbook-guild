@@ -825,7 +825,24 @@ function renderStats(m){
   const allIds=new Set();
   Object.values(ALL_OW).forEach(o=>Object.entries(o).forEach(([fid,s])=>{if(s==='owned')allIds.add(fid)}));
   const rankData=[...GM].map(g=>{const o=ALL_OW[g.n]||{};let sc=0;const ownedFL=FL.filter(f=>o[f.id]==='owned');ownedFL.forEach(f=>sc+=f.competition_score||0);return {...g,sc,ownedFL,count:ownedFL.length};}).sort((a,b)=>b.sc-a.sc);
-  m.innerHTML=`<div class="ph"><div><h1>📊 管理统计</h1></div></div>
+
+  // 导出数据功能
+  const exportData=()=>{try{
+    const out={};
+    GM.forEach(g=>{const o=ALL_OW[g.n]||{};if(Object.keys(o).length>0){const names=FL.filter(f=>o[f.id]==='owned').map(f=>f.name);if(names.length>0)out[g.n]=names;}});
+    const json=JSON.stringify(out,null,2);
+    const ta=document.createElement('textarea');ta.value=json;ta.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;padding:1rem;font-size:0.8rem;font-family:monospace;background:#1a1a2e;color:#e0e0e0';document.body.appendChild(ta);ta.focus();ta.select();
+    const cls=()=>{if(ta.parentNode)ta.parentNode.removeChild(ta);};
+    const btnBar=document.createElement('div');btnBar.style.cssText='position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);z-index:9999;display:flex;gap:0.5rem';
+    const cpBtn=document.createElement('button');cpBtn.textContent='📋 复制到剪贴板';cpBtn.className='btn';cpBtn.onclick=()=>{navigator.clipboard.writeText(json).then(()=>toast('✅ 已复制！可发给开发者更新代码')).catch(()=>{ta.select();document.execCommand('copy');toast('已复制！'))};};
+    const dlBtn=document.createElement('button');dlBtn.textContent='📥 下载文件';dlBtn.className='btn';dlBtn.onclick=()=>{const blob=new Blob([json],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='guild_flowers_export.json';a.click();URL.revokeObjectURL(url);};
+    const clBtn=document.createElement('button');clBtn.textContent='❌ 关闭';clBtn.className='btn';clBtn.onclick=cls;
+    btnBar.appendChild(cpBtn);btnBar.appendChild(dlBtn);btnBar.appendChild(clBtn);document.body.appendChild(btnBar);
+    document.addEventListener('keydown',function escH(e){if(e.key==='Escape'){cls();if(btnBar.parentNode)btnBar.parentNode.removeChild(btnBar);document.removeEventListener('keydown',escH);}});
+  }catch(e){toast('导出失败:'+e.message,'error');}};
+
+  m.innerHTML=`<div class="ph"><div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem"><h1 style="margin:0">📊 管理统计</h1><button class="btn" onclick="exportData()" style="font-size:0.75rem;white-space:nowrap">📤 导出全部成员鲜花数据</button></div></div>
+    <div class="card" style="background:var(--info-bg);border-color:var(--muted-fg)"><div class="tm ts" style="color:var(--muted-fg)">💡 点击「导出」可将当前所有成员的花朵数据导出为JSON格式，复制后发给开发者即可同步更新到系统中。</div></div>
     <div class="card"><div class="card-h"><h3>🏆 成员排行（点击展开明细）</h3></div>
       <div class="tbl"><table><thead><tr><th>#</th><th>昵称</th><th>角色</th><th>花朵</th><th>总分</th><th></th></tr></thead><tbody>
       ${rankData.map((x,i)=>`<tr style="cursor:pointer" onclick="toggleRankDetail('${x.n}')"><td>${i+1}</td><td>${esc(x.n)}${x.n===ME.n?' (我)':''}</td><td>${x.rn}</td><td>${x.count}</td><td><strong>${x.sc}</strong></td><td id="rd_arrow_${x.n.replace(/[^a-zA-Z0-9]/g,'_')}">▸</td></tr><tr id="rd_${x.n.replace(/[^a-zA-Z0-9]/g,'_')}" style="display:none"><td colspan="6"></td></tr>`).join('')}
