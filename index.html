@@ -548,6 +548,7 @@ function doAdminLogin(){
 
 function afterLogin(){
   renderApp();
+  syncOnLogin();
 }
 
 // 主应用
@@ -567,7 +568,7 @@ function renderApp(){
     <div class="usr"><span>${esc(ME.n)}</span><button class="btn btn-g btn-s" onclick="logout()">退出</button></div>
   </div></header>
   <main class="main" id="main"><div class="ph"><h1>🌸 花卉图鉴</h1></div></main>
-  <footer class="ftr">花园世界·公会花册 v2.2</footer>
+  <footer class="ftr">花园世界·公会花册 v2.7</footer>
   <div class="flt" id="flt" style="display:none"><div class="fi" id="fi"></div><button class="btn btn-p btn-s" onclick="save()">💾 保存</button></div>
   <div class="mod" id="mod" style="display:none" onclick="if(event.target===this)cm()"><div class="mod-in" id="modIn"><div class="mod-h"><h2 id="modT"></h2><button class="btn btn-g btn-s" onclick="cm()">✕</button></div><div class="mod-b" id="modB"></div></div></div>
   `:`<div style="text-align:center;padding:2rem"><p>登录信息无效</p><button class="btn btn-p" onclick="logout()">重新登录</button></div>`;
@@ -596,6 +597,117 @@ function sp(p){
   else if(p==='settings')renderSettings(m);
 }
 
+// ===== 云端数据同步 =====
+const SYNC_CFG=(function(){
+  // Token优先级：URL参数 > localStorage > 提示输入
+  let tk=new URLSearchParams(location.search).get('tk')||localStorage.getItem('fb_sync_token')||'';
+  return {
+    repo:'wellwang0819/flowerbook-guild',
+    path:'data/guild_data.json',
+    token:tk,
+    lastSyncKey:'fb_last_sync',
+    setToken:function(t){this.token=t;localStorage.setItem('fb_sync_token',t);}
+  };
+})();
+let _syncing=false; // 防止并发同步
+
+// 从GitHub拉取云端数据
+async function fetchRemoteData(){
+  try{
+    const req=new Request(`https://api.github.com/repos/${SYNC_CFG.repo}/contents/${SYNC_CFG.path}`);
+    req.headers.set('Authorization',`Bearer ${SYNC_CFG.token}`);
+    const res=await fetch(req,{signal:AbortSignal.timeout(15000)});
+    if(!res.ok)return null;
+    const j=await res.json();
+    const data=JSON.parse(atob(j.content));
+    return {data:data.data||{},sha:j.sha,ver:data.ver||0};
+  }catch(e){return null}
+}
+
+// 推送数据到GitHub（带SHA乐观锁）
+async function pushRemoteData(retryCount){
+  if(_syncing)return;_syncing=true;
+  try{
+    retryCount=retryCount||0;
+    // 先获取当前SHA
+    const remote=await fetchRemoteData();
+    const payload={ver:Date.now(),data:{...ALL_OW}};
+    const body=JSON.stringify(payload);
+    const b64=btoa(unescape(encodeURIComponent(body)));
+    const putBody={message:'🌸 自动同步花朵数据',content:b64};
+    if(remote&&remote.sha)putBody.sha=remote.sha;
+    const rq=new Request(`https://api.github.com/repos/${SYNC_CFG.repo}/contents/${SYNC_CFG.path}`,{method:'PUT',headers:{'Authorization':`Bearer ${SYNC_CFG.token}`,'Content-Type':'application/json'},body:JSON.stringify(putBody)});
+    const res=await fetch(rq,{signal:AbortSignal.timeout(20000)});
+    if(res.ok){
+      localStorage.setItem(SYNC_CFG.lastSyncKey,String(Date.now()));
+      toast('☁️ 已同步到云端','success');
+    }else if(res.status===409&&retryCount<2){
+      // 冲突：重新拉取+合并+再推送
+      const fresh=await fetchRemoteData();
+      if(fresh){mergeRemoteData(fresh.data);return pushRemoteData(retryCount+1)}
+    }
+    // 其他错误或重试耗尽 → 静默失败
+  }catch(e){
+    // 网络错误等，静默失败不影响本地
+  }finally{_syncing=false}
+}
+
+// 智能合并远程数据（本地优先，远程补缺）
+function mergeRemoteData(remoteAllOW){
+  let changed=false;
+  Object.keys(remoteAllOW).forEach(nick=>{
+    if(!ALL_OW[nick])ALL_OW[nick]={};
+    const local=ALL_OW[nick];
+    const remote=remoteAllOW[nick];
+    Object.entries(remote).forEach(([fid,st])=>{
+      if(!local[fid]){local[fid]=st;changed=true;}
+    });
+  });
+  if(changed){
+    localStorage.setItem('fbo_all',JSON.stringify(ALL_OW));
+    if(ME&&ALL_OW[ME.n]){
+      // 如果当前登录用户的数据被更新了，也同步到个人数据
+      localStorage.setItem('fbo_'+ME.n,JSON.stringify(ALL_OW[ME.n]));
+      OW={...ALL_OW[ME.n]};
+    }
+    localStorage.setItem(SYNC_CFG.lastSyncKey,String(Date.now()));
+  }
+  return changed;
+}
+
+// 登录时自动从云端拉取最新数据
+async function syncOnLogin(){
+  const syncTip=document.getElementById('syncTip');
+  if(syncTip)syncTip.style.display='inline';
+  try{
+    const remote=await fetchRemoteData();
+    if(!remote){if(syncTip)syncTip.style.display='none';return}
+    const lastSync=parseInt(localStorage.getItem(SYNC_CFG.lastSyncKey)||'0')||0;
+    if(remote.ver>lastSync&&Object.keys(remote.data).length>0){
+      const changed=mergeRemoteData(remote.data);
+      if(changed){
+        toast('📥 已获取 '+Object.keys(remote.data).length+' 位成员的最新数据');
+        // 刷新当前页面显示
+        if(typeof renderApp==='function')renderApp();
+      }
+    }
+    localStorage.setItem(SYNC_CFG.lastSyncKey,String(Date.now()));
+  }catch(e){}
+  if(syncTip)syncTip.style.display='none';
+}
+
+// 手动触发同步（管理页面用）
+async function manualSync(){
+  if(_syncing){toast('⏳ 正在同步中...');return}
+  toast('⏳ 正在同步...');
+  const remote=await fetchRemoteData();
+  if(!remote){toast('❌ 无法连接云端','error');return}
+  mergeRemoteData(remote.data);
+  await pushRemoteData(0);
+  toast('✅ 同步完成');
+  renderApp();
+}
+
 function updateFlt(){
   const o=Object.values(OW).filter(s=>s==='owned').length;
   let sc=0;Object.entries(OW).forEach(([fid,s])=>{if(s==='owned'){const f=FL.find(x=>x.id===fid);if(f)sc+=f.competition_score||0}});
@@ -608,6 +720,7 @@ function save(){
   ALL_OW[ME.n]={...OW};
   localStorage.setItem('fbo_all',JSON.stringify(ALL_OW));
   toast('保存成功');
+  pushRemoteData(0);
 }
 
 // ===== 花册 =====
@@ -841,8 +954,9 @@ function renderStats(m){
     document.addEventListener('keydown',function escH(e){if(e.key==='Escape'){cls();if(btnBar.parentNode)btnBar.parentNode.removeChild(btnBar);document.removeEventListener('keydown',escH);}});
   }catch(e){toast('导出失败:'+e.message,'error');}};
 
-  m.innerHTML=`<div class="ph"><div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem"><h1 style="margin:0">📊 管理统计</h1><button class="btn" onclick="exportData()" style="font-size:0.75rem;white-space:nowrap">📤 导出全部成员鲜花数据</button></div></div>
-    <div class="card" style="background:var(--info-bg);border-color:var(--muted-fg)"><div class="tm ts" style="color:var(--muted-fg)">💡 点击「导出」可将当前所有成员的花朵数据导出为JSON格式，复制后发给开发者即可同步更新到系统中。</div></div>
+  m.innerHTML=`<div class="ph"><div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem"><h1 style="margin:0">📊 管理统计</h1><div style="display:flex;gap:0.4rem;flex-wrap:wrap"><button class="btn" onclick="manualSync()" id="syncBtn" style="font-size:0.75rem;white-space:nowrap">☁️ 同步云端</button><span id="syncTip" style="display:none;font-size:0.7rem;color:var(--muted-fg);align-self:center">⏳ 同步中...</span><button class="btn" onclick="exportData()" style="font-size:0.75rem;white-space:nowrap">📤 导出数据</button></div></div></div>
+    <div class="card" id="syncStatusCard" style="background:var(--info-bg);border-color:var(--muted-fg);display:none"><div class="tm ts" id="syncStatusText" style="color:var(--muted-fg)"></div></div>
+    <div class="card" style="background:var(--info-bg);border-color:var(--muted-fg)"><div class="tm ts" style="color:var(--muted-fg)">💡 点击「同步云端」可拉取/推送成员填花数据到GitHub云端，实现多端自动同步。「导出」可将当前所有成员的花朵数据导出为JSON格式备份。</div></div>
     <div class="card"><div class="card-h"><h3>🏆 成员排行（点击展开明细）</h3></div>
       <div class="tbl"><table><thead><tr><th>#</th><th>昵称</th><th>角色</th><th>花朵</th><th>总分</th><th></th></tr></thead><tbody>
       ${rankData.map((x,i)=>`<tr style="cursor:pointer" onclick="toggleRankDetail('${x.n}')"><td>${i+1}</td><td>${esc(x.n)}${x.n===ME.n?' (我)':''}</td><td>${x.rn}</td><td>${x.count}</td><td><strong>${x.sc}</strong></td><td id="rd_arrow_${x.n.replace(/[^a-zA-Z0-9]/g,'_')}">▸</td></tr><tr id="rd_${x.n.replace(/[^a-zA-Z0-9]/g,'_')}" style="display:none"><td colspan="6"></td></tr>`).join('')}
@@ -864,6 +978,17 @@ function renderStats(m){
     <div class="card"><div class="card-h"><h3>📋 缺花分析</h3></div><div id="misAna"></div></div>`;
   renderCov(0);
   renderMis();
+  // 显示云端同步状态
+  const lastSync=parseInt(localStorage.getItem(SYNC_CFG.lastSyncKey)||'0')||0;
+  const syncCard=document.getElementById('syncStatusCard');
+  const syncText=document.getElementById('syncStatusText');
+  if(syncCard&&syncText){
+    if(lastSync>0){
+      const dt=new Date(lastSync);
+      syncCard.style.display='block';
+      syncText.innerHTML=`☁️ 上次同步：${dt.toLocaleString('zh-CN')} · 云端已记录 <strong>${Object.keys(ALL_OW).length}</strong> 位成员数据`;
+    }
+  }
 }
 // 图鉴覆盖矩阵
 let covIdx=0;
