@@ -948,7 +948,7 @@ function renderStats(m){
     const ta=document.createElement('textarea');ta.value=json;ta.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;padding:1rem;font-size:0.8rem;font-family:monospace;background:#1a1a2e;color:#e0e0e0';document.body.appendChild(ta);ta.focus();ta.select();
     const cls=()=>{if(ta.parentNode)ta.parentNode.removeChild(ta);};
     const btnBar=document.createElement('div');btnBar.style.cssText='position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);z-index:9999;display:flex;gap:0.5rem';
-    const cpBtn=document.createElement('button');cpBtn.textContent='📋 复制到剪贴板';cpBtn.className='btn';cpBtn.onclick=()=>{navigator.clipboard.writeText(json).then(()=>toast('✅ 已复制！可发给开发者更新代码')).catch(()=>{ta.select();document.execCommand('copy');toast('已复制！')});}
+    const cpBtn=document.createElement('button');cpBtn.textContent='📋 复制到剪贴板';cpBtn.className='btn';cpBtn.onclick=()=>{navigator.clipboard.writeText(json).then(()=>toast('✅ 已复制！可发给开发者更新代码')).catch(()=>{ta.select();document.execCommand('copy');toast('已复制！')});};
     const dlBtn=document.createElement('button');dlBtn.textContent='📥 下载文件';dlBtn.className='btn';dlBtn.onclick=()=>{const blob=new Blob([json],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='guild_flowers_export.json';a.click();URL.revokeObjectURL(url);};
     const clBtn=document.createElement('button');clBtn.textContent='❌ 关闭';clBtn.className='btn';clBtn.onclick=cls;
     btnBar.appendChild(cpBtn);btnBar.appendChild(dlBtn);btnBar.appendChild(clBtn);document.body.appendChild(btnBar);
