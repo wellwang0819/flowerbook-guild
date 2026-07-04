@@ -507,20 +507,10 @@ function handleLogin(){
   ME=m;
   if(!savedPwd&&pwd&&pwd!==COMMON_PWD)localStorage.setItem('fbpwd_'+m.n,pwd);
   localStorage.setItem('fbp',JSON.stringify(m));
-  // 从localStorage加载花朵状态
+  // 🛡️ 账号隔离：清空上一账号的全局数据缓存
+  ALL_OW={};
+  // 从localStorage加载当前用户个人数据
   try{OW=JSON.parse(localStorage.getItem('fbo_'+m.n))||{}}catch(e){OW={}}
-  // 【修复】从全员数据同步：合并策略——ALL_OW中有但OW中没有的，补进去
-  try{ALL_OW=JSON.parse(localStorage.getItem('fbo_all'))||{}}catch(e){ALL_OW={}}
-  if(ALL_OW[m.n]&&Object.keys(ALL_OW[m.n]).length>0){
-    let changed=false;
-    Object.entries(ALL_OW[m.n]).forEach(([fid,st])=>{
-      if(!OW[fid]){OW[fid]=st;changed=true;}
-    });
-    if(changed){
-      localStorage.setItem('fbo_'+m.n, JSON.stringify(OW));
-      console.log('📥 已从全员数据合并到 '+m.n+' 的花册（共'+Object.keys(OW).length+'朵）');
-    }
-  }
   if(!ALL_OW[m.n])ALL_OW[m.n]={};
   afterLogin();
 }
@@ -586,6 +576,9 @@ function renderApp(){
 }
 
 function logout(){
+  // 保存当前用户数据，清除全员缓存（账号隔离）
+  if(ME&&ME.n&&OW&&Object.keys(OW).length>0)localStorage.setItem('fbo_'+ME.n,JSON.stringify(OW));
+  ALL_OW={};OW={};localStorage.removeItem('fbo_all');
   localStorage.removeItem('fbp');ME=null;selMember=null;
   document.getElementById('page').innerHTML='<div class="auth-pg"></div>';
   renderLogin();
