@@ -392,6 +392,8 @@ const RN={1:'会长',2:'副会长',3:'理事',4:'菁英',5:'成员'};
 
 // ===== 状态 =====
 let ME=null,OW={},ALL_OW={},PG='auth',CV='grid',AC=new Set,AS=[];
+let LOGGED=[]; // 已登录账号列表（用于账号切换）
+try{LOGGED=JSON.parse(localStorage.getItem('fb_logged')||'[]');}catch(e){LOGGED=[];}
 let IMG='https://flowerbook.my';
 // 品级隐藏状态（持久化）
 try{var _hg=JSON.parse(localStorage.getItem('fb_hidden_grades')||'[]');}catch(e){var _hg=[];}
@@ -435,7 +437,7 @@ function renderLogin(){
   if(saved){try{ME=JSON.parse(saved);const g=GM.find(x=>x.n===ME.n);if(g){ME={...g,...ME};
     // 【关键修复】自动登录也要加载和同步OW数据（之前这里直接afterLogin导致OW为空）
     try{OW=JSON.parse(localStorage.getItem('fbo_'+ME.n))||{}}catch(e){OW={}}
-    try{ALL_OW=JSON.parse(localStorage.getItem('fbo_all'))||{}}catch(e){ALL_OW={}}
+    ALL_OW={};
     if(ALL_OW[ME.n]&&Object.keys(ALL_OW[ME.n]).length>0){
       let changed=false;
       Object.entries(ALL_OW[ME.n]).forEach(([fid,st])=>{
@@ -507,6 +509,8 @@ function handleLogin(){
   ME=m;
   if(!savedPwd&&pwd&&pwd!==COMMON_PWD)localStorage.setItem('fbpwd_'+m.n,pwd);
   localStorage.setItem('fbp',JSON.stringify(m));
+  // 记录已登录账号
+  if(!LOGGED.includes(m.n)){LOGGED.push(m.n);localStorage.setItem('fb_logged',JSON.stringify(LOGGED));}
   // 🛡️ 账号隔离：清空上一账号的全局数据缓存
   ALL_OW={};
   // 从localStorage加载当前用户个人数据
@@ -548,6 +552,12 @@ function doAdminLogin(){
 function afterLogin(){
   renderApp();
   syncOnLogin();
+  // 异步记录登录日志
+  getPublicIP().then(ip=>{
+    logLoginToCloud(ME.n,ip);
+    // 记录到LOGGED列表
+    if(!LOGGED.includes(ME.n)){LOGGED.push(ME.n);localStorage.setItem('fb_logged',JSON.stringify(LOGGED));}
+  });
 }
 
 // 主应用
@@ -564,7 +574,17 @@ function renderApp(){
       <a data-pg="log" onclick="sp('log')">📋日志</a>
       <a data-pg="settings" onclick="sp('settings')">⚙️设置</a>
     </nav>
-    <div class="usr"><span>${esc(ME.n)}</span><button class="btn btn-g btn-s" onclick="logout()">退出</button></div>
+    <div class="usr" style="position:relative">
+      <span onclick="toggleAccountDropdown()" style="cursor:pointer">${esc(ME.n)} ▾</span>
+      <div id="accountDropdown" style="display:none;position:absolute;top:100%;right:0;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 8px 24px #0000001a;z-index:100;min-width:140px;max-height:300px;overflow-y:auto">
+        ${LOGGED.filter(n=>n!==ME.n).map(n=>{
+          const gm=GM.find(x=>x.n===n);
+          return `<div onclick="switchToAccount('${n}');toggleAccountDropdown()" style="padding:0.5rem 0.8rem;font-size:0.82rem;cursor:pointer;border-bottom:1px solid var(--border);white-space:nowrap">🔄 ${esc(n)}${gm?' <span style="color:var(--muted-fg);font-size:0.7rem">'+gm.rn+'</span>':''}</div>`;
+        }).join('')}
+        ${LOGGED.length>1?'<div style="border-top:1px solid var(--border)"></div>':''}
+        <div onclick="logout()" style="padding:0.5rem 0.8rem;font-size:0.82rem;cursor:pointer;color:var(--danger);white-space:nowrap">🚪 退出</div>
+      </div>
+    </div>
   </div></header>
   <main class="main" id="main"><div class="ph"><h1>🌸 花卉图鉴</h1></div></main>
   <footer class="ftr">花园世界·公会花册 v2.7</footer>
@@ -574,6 +594,34 @@ function renderApp(){
   document.getElementById('page').innerHTML=`<div style="min-height:100vh;display:flex;flex-direction:column">${nav}</div>`;
   sp('catalog');
 }
+
+// 🔄 账号快捷切换：仅切换同设备已登录过的账号
+function switchToAccount(nick){
+  const m=GM.find(x=>x.n===nick);
+  if(!m||!ME)return;
+  // 保存当前账号
+  if(ME.n!==nick&&OW&&Object.keys(OW).length>0)localStorage.setItem('fbo_'+ME.n,JSON.stringify(OW));
+  // 清空缓存（隔离）
+  ALL_OW={};OW={};localStorage.removeItem('fbo_all');
+  // 切换
+  ME=m;localStorage.setItem('fbp',JSON.stringify(m));
+  try{OW=JSON.parse(localStorage.getItem('fbo_'+m.n))||{}}catch(e){OW={}}
+  if(!ALL_OW[m.n])ALL_OW[m.n]={};
+  afterLogin();
+  toast('🔄 已切换到 '+m.n);
+}
+
+// 切换账号下拉菜单
+function toggleAccountDropdown(){
+  const dd=document.getElementById('accountDropdown');
+  if(!dd)return;
+  dd.style.display=dd.style.display==='block'?'none':'block';
+}
+// 点击外部关闭下拉
+document.addEventListener('click',function(e){
+  const dd=document.getElementById('accountDropdown');
+  if(dd&&!e.target.closest('.usr'))dd.style.display='none';
+});
 
 function logout(){
   // 保存当前用户数据，清除全员缓存（账号隔离）
@@ -612,6 +660,43 @@ const SYNC_CFG=(function(){
   };
 })();
 let _syncing=false; // 防止并发同步
+
+// 🌐 获取公网IP
+async function getPublicIP(){
+  try{
+    const res=await fetch('https://api.ipify.org?format=json',{signal:AbortSignal.timeout(5000)});
+    const j=await res.json();
+    return j.ip||'unknown';
+  }catch(e){return 'unknown'}
+}
+
+// 📝 记录登录日志到云端（IP+时间）
+async function logLoginToCloud(nick,ip){
+  if(!SYNC_CFG.token||!nick)return;
+  try{
+    const remote=await fetchRemoteData();
+    const baseData=(remote&&!remote.error&&remote.data)?{...remote.data}:{};
+    // 在数据中添加 __meta 字段记录登录信息
+    if(!baseData.__meta__)baseData.__meta__={};
+    if(!baseData.__meta__[nick])baseData.__meta__[nick]={logins:[]};
+    const m=baseData.__meta__[nick];
+    m.lastIP=ip;
+    m.lastLogin=Date.now();
+    m.logins.push({ip,time:Date.now()});
+    if(m.logins.length>50)m.logins=m.logins.slice(-50);
+    
+    const sha=remote&&remote.sha?remote.sha:undefined;
+    const payload={ver:Date.now(),data:baseData};
+    const body=JSON.stringify(payload);
+    const b64=btoa(unescape(encodeURIComponent(body)));
+    const putBody={message:'📝 '+nick+' 登录 '+ip,content:b64};
+    if(sha)putBody.sha=sha;
+    const rq=new Request('https://api.github.com/repos/'+SYNC_CFG.repo+'/contents/'+SYNC_CFG.path,
+      {method:'PUT',headers:{'Authorization':'Bearer '+SYNC_CFG.token},body:JSON.stringify(putBody)});
+    await fetch(rq,{signal:AbortSignal.timeout(10000)});
+  }catch(e){}
+}
+
 
 // 从GitHub拉取云端数据
 // ===== 云端数据完整性校验 =====
@@ -957,7 +1042,7 @@ function cm(){document.getElementById('mod').style.display='none'}
 function renderMy(m){
   // 【关键兜底】每次渲染时确保OW有数据——从ALL_OW实时同步
   if(!OW||Object.keys(OW).length===0){
-    try{ALL_OW=JSON.parse(localStorage.getItem('fbo_all'))||{}}catch(e){ALL_OW={}}
+    ALL_OW={};
     if(ME&&ALL_OW[ME.n]&&Object.keys(ALL_OW[ME.n]).length>0){
       OW={...ALL_OW[ME.n]};
       console.log('🔄 renderMy兜底同步: '+ME.n+' ('+Object.keys(OW).length+'朵)');
@@ -1497,6 +1582,7 @@ function loadAdm(){
       <button class="btn btn-p btn-s" onclick="adminExportAll()">📤 导出全员数据</button>
       <button class="btn btn-g btn-s" onclick="adminImportAll()">📥 导入全员数据</button>
       <button class="btn btn-w btn-s" onclick="adminResetAll()">🔄 重置所有数据</button>
+      <button class="btn btn-g btn-s" onclick="showLoginLog()">📋 登录日志</button>
     </div>
     <div class="card" style="margin-top:0.5rem">
       <div class="card-h"><h4>📊 数据概览</h4></div>
@@ -1520,6 +1606,40 @@ function loadAdm(){
         }).join('')}
       </div>
     </div>`;
+}
+
+
+// 📋 查看登录日志
+async function showLoginLog(){
+  toast('⏳ 正在获取登录日志...');
+  const remote=await fetchRemoteData();
+  if(!remote||remote.error){toast('❌ 无法获取云端数据','error');return;}
+  const meta=remote.data.__meta__||{};
+  const entries=Object.entries(meta).filter(([k])=>k!=='__meta__');
+  if(entries.length===0){toast('暂无登录日志');return;}
+  // 渲染到弹窗
+  let html='<div style="max-height:400px;overflow-y:auto">';
+  entries.forEach(([nick,info])=>{
+    const logins=info.logins||[];
+    const last=logins.length>0?logins[logins.length-1]:null;
+    html+='<div style="padding:0.5rem;border-bottom:1px solid var(--border)">';
+    html+='<div style="font-weight:600;font-size:0.85rem">'+esc(nick)+'</div>';
+    if(last){
+      html+='<div style="font-size:0.75rem;color:var(--muted-fg)">最近: '+new Date(last.time).toLocaleString('zh-CN')+' · IP: '+esc(last.ip)+'</div>';
+    }
+    if(logins.length>1){
+      html+='<div style="font-size:0.72rem;color:var(--muted-fg);margin-top:0.3rem">历史('+logins.length+'次):';
+      logins.slice(-5).reverse().forEach(l=>{
+        html+='<div> · '+new Date(l.time).toLocaleString('zh-CN')+' '+esc(l.ip)+'</div>';
+      });
+      html+='</div>';
+    }
+    html+='</div>';
+  });
+  html+='</div>';
+  document.getElementById('modT').textContent='📋 登录日志';
+  document.getElementById('modB').innerHTML=html;
+  document.getElementById('mod').style.display='flex';
 }
 
 function adminExportAll(){
