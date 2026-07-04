@@ -621,6 +621,33 @@ const SYNC_CFG=(function(){
 let _syncing=false; // 防止并发同步
 
 // 从GitHub拉取云端数据
+// ===== 云端数据完整性校验 =====
+function validateRemoteData(repoAllOW){
+  if(!repoAllOW||typeof repoAllOW!=='object')return false;
+  let allOk=true;
+  Object.entries(repoAllOW).forEach(([nick,flowers])=>{
+    // 校验1：成员名不含Latin-1乱码字符
+    if([...nick].some(c=>c.charCodeAt(0)>127&&c.charCodeAt(0)<256)){
+      console.warn('❌ 校验失败：乱码成员名',nick);allOk=false;return;
+    }
+    // 校验2：成员名不为空且不超过50字符
+    if(!nick||nick.length>50){allOk=false;return;}
+    // 校验3：花朵数据是对象
+    if(!flowers||typeof flowers!=='object'){allOk=false;return;}
+    Object.entries(flowers).forEach(([fid,st])=>{
+      // 校验4：花朵ID格式正确（FL+3位数字 或 其他合理ID）
+      if(fid==='undefined'||fid==='null'||!fid){
+        console.warn('❌ 校验失败：无效花朵ID',fid);allOk=false;return;
+      }
+      // 校验5：状态值合法
+      if(!['owned','planting'].includes(st)){
+        console.warn('❌ 校验失败：非法状态',fid,st);allOk=false;return;
+      }
+    });
+  });
+  return allOk;
+}
+
 async function fetchRemoteData(){
   if(!SYNC_CFG.token)return null;
   try{
@@ -629,19 +656,33 @@ async function fetchRemoteData(){
     const res=await fetch(req,{signal:AbortSignal.timeout(15000)});
     if(!res.ok)return null;
     const j=await res.json();
-    const data=JSON.parse(decodeURIComponent(escape(atob(j.content))));
-    return {data:data.data||{},sha:j.sha,ver:data.ver||0};
+    const decoded=JSON.parse(decodeURIComponent(escape(atob(j.content))));
+    const repoData=decoded.data||{};
+    // ✅ 隔离验证：数据未通过校验时返回特殊标记，不污染本地
+    if(!validateRemoteData(repoData)){
+      console.error('❌ 云端数据校验未通过，已拦截');
+      return {error:'data_invalid',ver:decoded.ver||0,sha:j.sha,data:{}};
+    }
+    return {data:repoData,sha:j.sha,ver:decoded.ver||0};
   }catch(e){return null}
 }
 
-// 推送数据到GitHub（带SHA乐观锁）
+// 推送数据到GitHub（增量：只更新当前用户数据，不污染其他成员）
 async function pushRemoteData(retryCount){
   if(_syncing||!SYNC_CFG.token)return;_syncing=true;
   try{
     retryCount=retryCount||0;
-    // 先获取当前SHA
     const remote=await fetchRemoteData();
-    const payload={ver:Date.now(),data:{...ALL_OW}};
+    // 云端已有数据 + 仅覆盖当前用户 → 形成新payload
+    const baseData=(remote&&!remote.error&&remote.data)?{...remote.data}:{};
+    baseData[ME.n]={...ALL_OW[ME.n]};
+    // ✅ 推送前验证：防止本地污染传到云端
+    if(!validateRemoteData(baseData)){
+      console.error('❌ 推送前校验未通过，已取消同步');
+      toast('⚠️ 本地数据异常，同步已取消','error');
+      return;
+    }
+    const payload={ver:Date.now(),data:baseData};
     const body=JSON.stringify(payload);
     const b64=btoa(unescape(encodeURIComponent(body)));
     const putBody={message:'🌸 自动同步花朵数据',content:b64};
@@ -652,11 +693,9 @@ async function pushRemoteData(retryCount){
       localStorage.setItem(SYNC_CFG.lastSyncKey,String(Date.now()));
       toast('☁️ 已同步到云端','success');
     }else if(res.status===409&&retryCount<2){
-      // 冲突：重新拉取+合并+再推送
       const fresh=await fetchRemoteData();
-      if(fresh){mergeRemoteData(fresh.data);return pushRemoteData(retryCount+1)}
+      if(fresh&&!fresh.error){mergeRemoteData(fresh.data);return pushRemoteData(retryCount+1)}
     }
-    // 其他错误或重试耗尽 → 静默失败
   }catch(e){
     // 网络错误等，静默失败不影响本地
   }finally{_syncing=false}
@@ -732,6 +771,13 @@ async function syncOnLogin(){
   try{
     const remote=await fetchRemoteData();
     if(!remote){if(syncTip)syncTip.style.display='none';return}
+    // 🛡️ 云端数据异常时拦截，不污染本地
+    if(remote.error==='data_invalid'){
+      toast('⚠️ 云端数据异常已拦截，本地数据不受影响','error');
+      localStorage.setItem(SYNC_CFG.lastSyncKey,String(Date.now()));
+      if(syncTip)syncTip.style.display='none';
+      return;
+    }
     const lastSync=parseInt(localStorage.getItem(SYNC_CFG.lastSyncKey)||'0')||0;
     if(remote.ver>lastSync&&Object.keys(remote.data).length>0){
       const changed=mergeRemoteData(remote.data);
@@ -753,6 +799,7 @@ async function manualSync(){
   toast('⏳ 正在同步...');
   const remote=await fetchRemoteData();
   if(!remote){toast('❌ 无法连接云端','error');return}
+  if(remote.error==='data_invalid'){toast('⚠️ 云端数据异常，同步已取消','error');return}
   mergeRemoteData(remote.data);
   cleanGarbledData();
   await pushRemoteData(0);
@@ -767,6 +814,10 @@ function updateFlt(){
 }
 
 function save(){
+  // 🛡️ 本地数据自检：过滤无效花朵状态
+  Object.keys(OW).forEach(fid=>{
+    if(!['owned','planting'].includes(OW[fid]))delete OW[fid];
+  });
   localStorage.setItem('fbo_'+ME.n,JSON.stringify(OW));
   if(!ALL_OW[ME.n])ALL_OW[ME.n]={};
   ALL_OW[ME.n]={...OW};
