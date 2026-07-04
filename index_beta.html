@@ -392,6 +392,8 @@ const RN={1:'会长',2:'副会长',3:'理事',4:'菁英',5:'成员'};
 
 // ===== 状态 =====
 let ME=null,OW={},ALL_OW={},PG='auth',CV='grid',AC=new Set,AS=[];
+let LOGGED=[];
+try{LOGGED=JSON.parse(localStorage.getItem('fb_logged')||'[]');}catch(e){LOGGED=[];}
 let IMG='https://flowerbook.my';
 // 品级隐藏状态（持久化）
 try{var _hg=JSON.parse(localStorage.getItem('fb_hidden_grades')||'[]');}catch(e){var _hg=[];}
@@ -548,7 +550,15 @@ function doAdminLogin(){
 function afterLogin(){
   renderApp();
   syncOnLogin();
+  // 异步记录登录日志
+  getPublicIP().then(ip=>{
+    logLoginToCloud(ME.n,ip);
+    // 记录到LOGGED列表
+    if(!LOGGED.includes(ME.n)){LOGGED.push(ME.n);localStorage.setItem('fb_logged',JSON.stringify(LOGGED));}
+  });
 }
+
+// 主应用
 
 // 主应用
 function renderApp(){
@@ -564,8 +574,14 @@ function renderApp(){
       <a data-pg="log" onclick="sp('log')">📋日志</a>
       <a data-pg="settings" onclick="sp('settings')">⚙️设置</a>
     </nav>
-    <div class="usr"><span>${esc(ME.n)}</span><button class="btn btn-g btn-s" onclick="logout()">退出</button></div>
-  </div></header>
+    <div class="usr" style="position:relative">
+      <span onclick="toggleAccountDropdown()" style="cursor:pointer">${esc(ME.n)} ▾</span>
+      <div id="accountDropdown" style="display:none;position:absolute;top:100%;right:0;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 8px 24px #0000001a;z-index:100;min-width:140px;max-height:300px;overflow-y:auto">
+        ${LOGGED.filter(n=>n!==ME.n).map(n=>{
+          const gm=GM.find(x=>x.n===n);
+          return `<div onclick="switchToAccount('${n}');toggleAccountDropdown()" style="padding:0.5rem 0.8rem;font-size:0.82rem;cursor:pointer;border-bottom:1px solid var(--border);white-space:nowrap">🔄 ${esc(n)}${gm?' <span style="color:var(--muted-fg);font-size:0.7rem">'+gm.rn+'</span>':''}</div>`;
+        }).join('')}
+        ${LOGGED.length>1?'<div style="border-top:1px solid var(--border)"></div></header>
   <main class="main" id="main"><div class="ph"><h1>🌸 花卉图鉴</h1></div></main>
   <footer class="ftr">花园世界·公会花册 [BETA] v2.7 [BETA]</footer>
   <div class="flt" id="flt" style="display:none"><div class="fi" id="fi"></div><button class="btn btn-p btn-s" onclick="save()">💾 保存</button></div>
@@ -575,6 +591,32 @@ function renderApp(){
   sp('catalog');
 }
 
+function switchToAccount(nick){
+  const m=GM.find(x=>x.n===nick);
+  if(!m||!ME)return;
+  // 保存当前账号
+  if(ME.n!==nick&&OW&&Object.keys(OW).length>0)localStorage.setItem('fbo_'+ME.n,JSON.stringify(OW));
+  // 清空缓存（隔离）
+  ALL_OW={};OW={};localStorage.removeItem('fbo_all');
+  // 切换
+  ME=m;localStorage.setItem('fbp',JSON.stringify(m));
+  try{OW=JSON.parse(localStorage.getItem('fbo_'+m.n))||{}}catch(e){OW={}}
+  if(!ALL_OW[m.n])ALL_OW[m.n]={};
+  afterLogin();
+  toast('🔄 已切换到 '+m.n);
+}
+
+// 切换账号下拉菜单
+function toggleAccountDropdown(){
+  const dd=document.getElementById('accountDropdown');
+  if(!dd)return;
+  dd.style.display=dd.style.display==='block'?'none':'block';
+}
+// 点击外部关闭下拉
+document.addEventListener('click',function(e){
+  const dd=document.getElementById('accountDropdown');
+  if(dd&&!e.target.closest('.usr'))dd.style.display='none';
+});
 function logout(){
   // 保存当前用户数据，清除全员缓存（账号隔离）
   if(ME&&ME.n&&OW&&Object.keys(OW).length>0)localStorage.setItem('fbo_'+ME.n,JSON.stringify(OW));
@@ -612,6 +654,71 @@ const SYNC_CFG=(function(){
   };
 })();
 let _syncing=false; // 防止并发同步
+
+async function getPublicIP(){
+  try{
+    const res=await fetch('https://api.ipify.org?format=json',{signal:AbortSignal.timeout(5000)});
+    const j=await res.json();
+    return j.ip||'unknown';
+  }catch(e){return 'unknown'}
+}
+
+// 📝 记录登录日志到云端（IP+时间）
+async function logLoginToCloud(nick,ip){
+  if(!SYNC_CFG.token||!nick)return;
+  try{
+    const remote=await fetchRemoteData();
+    const baseData=(remote&&!remote.error&&remote.data)?{...remote.data}:{};
+    // 在数据中添加 __meta 字段记录登录信息
+    if(!baseData.__meta__)baseData.__meta__={};
+    if(!baseData.__meta__[nick])baseData.__meta__[nick]={logins:[]};
+    const m=baseData.__meta__[nick];
+    m.lastIP=ip;
+    m.lastLogin=Date.now();
+    m.logins.push({ip,time:Date.now()});
+    if(m.logins.length>50)m.logins=m.logins.slice(-50);
+    
+    const sha=remote&&remote.sha?remote.sha:undefined;
+    const payload={ver:Date.now(),data:baseData};
+    const body=JSON.stringify(payload);
+    const b64=btoa(unescape(encodeURIComponent(body)));
+    const putBody={message:'📝 '+nick+' 登录 '+ip,content:b64};
+    if(sha)putBody.sha=sha;
+    const rq=new Request('https://api.github.com/repos/'+SYNC_CFG.repo+'/contents/'+SYNC_CFG.path,
+      {method:'PUT',headers:{'Authorization':'Bearer '+SYNC_CFG.token},body:JSON.stringify(putBody)});
+    await fetch(rq,{signal:AbortSignal.timeout(10000)});
+  }catch(e){}
+}
+
+
+// 从GitHub拉取云端数据
+// ===== 云端数据完整性校验 =====
+function validateRemoteData(repoAllOW){
+  if(!repoAllOW||typeof repoAllOW!=='object')return false;
+  let allOk=true;
+  Object.entries(repoAllOW).forEach(([nick,flowers])=>{
+    // 校验1：成员名不含Latin-1乱码字符
+    if([...nick].some(c=>c.charCodeAt(0)>127&&c.charCodeAt(0)<256)){
+      console.warn('❌ 校验失败：乱码成员名',nick);allOk=false;return;
+    }
+    // 校验2：成员名不为空且不超过50字符
+    if(!nick||nick.length>50){allOk=false;return;}
+    // 校验3：花朵数据是对象
+    if(!flowers||typeof flowers!=='object'){allOk=false;return;}
+    Object.entries(flowers).forEach(([fid,st])=>{
+      // 校验4：花朵ID格式正确（FL+3位数字 或 其他合理ID）
+      if(fid==='undefined'||fid==='null'||!fid){
+        console.warn('❌ 校验失败：无效花朵ID',fid);allOk=false;return;
+      }
+      // 校验5：状态值合法
+      if(!['owned','planting'].includes(st)){
+        console.warn('❌ 校验失败：非法状态',fid,st);allOk=false;return;
+      }
+    });
+  });
+  return allOk;
+}
+
 
 // 从GitHub拉取云端数据
 // ===== 云端数据完整性校验 =====
@@ -1498,6 +1605,7 @@ function loadAdm(){
       <button class="btn btn-p btn-s" onclick="adminExportAll()">📤 导出全员数据</button>
       <button class="btn btn-g btn-s" onclick="adminImportAll()">📥 导入全员数据</button>
       <button class="btn btn-w btn-s" onclick="adminResetAll()">🔄 重置所有数据</button>
+      <button class="btn btn-g btn-s" onclick="showLoginLog()">📋 登录日志</button>
     </div>
     <div class="card" style="margin-top:0.5rem">
       <div class="card-h"><h4>📊 数据概览</h4></div>
