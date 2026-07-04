@@ -663,6 +663,46 @@ async function pushRemoteData(retryCount){
 }
 
 // 智能合并远程数据（本地优先，远程补缺）
+// 🧹 清理本地乱码数据：移除或合并 Latin-1 乱码条目
+function cleanGarbledData(){
+  let changed=false;
+  const garbledKeys=Object.keys(ALL_OW).filter(k=>[...k].some(c=>c.charCodeAt(0)>127&&c.charCodeAt(0)<256));
+  garbledKeys.forEach(gk=>{
+    // 尝试恢复乱码名
+    let recovered=gk;
+    try{
+      const bytes=Uint8Array.from([...gk].map(c=>c.charCodeAt(0)));
+      recovered=new TextDecoder().decode(bytes);
+    }catch(e){return}
+    // 如果恢复了并且有对应的干净条目，合并数据
+    if(recovered!==gk&&ALL_OW[recovered]){
+      const clean=ALL_OW[recovered];
+      const garbled=ALL_OW[gk];
+      Object.entries(garbled).forEach(([fid,st])=>{
+        if(fid!=='undefined'&&!clean[fid]){clean[fid]=st;changed=true;}
+      });
+    }
+    delete ALL_OW[gk];
+    changed=true;
+  });
+  // 同时清理所有条目中的 undefined
+  Object.keys(ALL_OW).forEach(k=>{
+    if(ALL_OW[k]['undefined']){
+      delete ALL_OW[k]['undefined'];
+      changed=true;
+    }
+  });
+  if(changed){
+    localStorage.setItem('fbo_all',JSON.stringify(ALL_OW));
+    if(ME&&ALL_OW[ME.n]){
+      localStorage.setItem('fbo_'+ME.n,JSON.stringify(ALL_OW[ME.n]));
+      OW={...ALL_OW[ME.n]};
+    }
+    localStorage.setItem(SYNC_CFG.lastSyncKey,String(Date.now()));
+  }
+  return changed;
+}
+
 function mergeRemoteData(remoteAllOW){
   let changed=false;
   Object.keys(remoteAllOW).forEach(nick=>{
@@ -695,7 +735,8 @@ async function syncOnLogin(){
     const lastSync=parseInt(localStorage.getItem(SYNC_CFG.lastSyncKey)||'0')||0;
     if(remote.ver>lastSync&&Object.keys(remote.data).length>0){
       const changed=mergeRemoteData(remote.data);
-      if(changed){
+      const cleaned=cleanGarbledData();
+      if(changed||cleaned){
         toast('📥 已获取 '+Object.keys(remote.data).length+' 位成员的最新数据');
         // 刷新当前页面显示
         if(typeof renderApp==='function')renderApp();
@@ -713,6 +754,7 @@ async function manualSync(){
   const remote=await fetchRemoteData();
   if(!remote){toast('❌ 无法连接云端','error');return}
   mergeRemoteData(remote.data);
+  cleanGarbledData();
   await pushRemoteData(0);
   toast('✅ 同步完成');
   renderApp();
