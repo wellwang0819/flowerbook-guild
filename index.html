@@ -631,7 +631,11 @@ async function fetchRemoteData(){
     const res=await fetch(req,{signal:AbortSignal.timeout(15000)});
     if(!res.ok)return null;
     const j=await res.json();
-    const data=JSON.parse(atob(j.content));
+    // 关键修复：base64→Latin1→UTF-8 还原（与pushRemoteData的编码对称）
+    const b64=j.content;
+    const latin1=atob(b64);
+    const utf8=decodeURIComponent(escape(latin1));
+    const data=JSON.parse(utf8);
     return {data:data.data||{},sha:j.sha,ver:data.ver||0};
   }catch(e){return null}
 }
