@@ -21,7 +21,7 @@ body{font-family:'Inter','PingFang SC','Microsoft YaHei',sans-serif;background:v
 button{font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
 /* 头部 */
 .hdr{position:sticky;top:0;z-index:50;background:#fff8;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
-.hdr-in{max-width:80rem;margin:0 auto;padding:0.5rem 1rem;display:flex;align-items:center;gap:0.5rem}
+.hdr-in{max-width:80rem;margin:0 auto;padding:0.5rem 1rem;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap}
 .logo{font-weight:700;color:var(--primary);font-size:1rem;white-space:nowrap;flex-shrink:0}
 .nav{display:flex;gap:0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;flex:1;min-width:0;margin:0 0.4rem}
 .nav::-webkit-scrollbar{display:none}
@@ -150,17 +150,17 @@ button{font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparen
   body{font-size:14px}
   .main{padding:0.35rem 0.4rem;padding-bottom:5.5rem}
 
-  /* 头部导航 */
+  /* 头部导航 - 手机端两行布局 */
   .hdr{position:-webkit-sticky;position:sticky;top:0;z-index:50}
-  .hdr-in{padding:0.25rem 0.35rem;gap:0.2rem}
-  .logo{font-size:0.82rem}
-  .nav{margin:0 0.15rem;gap:0}
-  .nav a{padding:0.18rem 0.32rem;font-size:0.65rem;border-radius:0.5rem;line-height:1.4}
-
-  /* 用户信息区：隐藏名称只显示退出按钮，或精简显示 */
-  .usr{gap:0.2rem;max-width:auto;font-size:0.7rem}
-  .usr span{max-width:2.8rem;font-size:0.65rem}
-  .usr .btn{padding:0.2rem 0.35rem;font-size:0.62rem}
+  .hdr-in{padding:0.3rem 0.4rem;gap:0.25rem;flex-wrap:wrap}
+  .logo{font-size:0.82rem;order:1}
+  /* 用户信息放第一行右侧 */
+  .usr{gap:0.15rem;max-width:none;font-size:0.68rem;order:2;margin-left:auto}
+  .usr span{max-width:3.5rem;font-size:0.62rem}
+  .usr .btn{padding:0.18rem 0.35rem!important;font-size:0.6rem!important;line-height:1.3}
+  /* 导航链接独占第二行，可横滑 */
+  .nav{order:3;flex-basis:100%;margin:0.15rem 0.1rem 0 0.1rem;gap:0}
+  .nav a{padding:0.2rem 0.4rem;font-size:0.65rem;border-radius:0.5rem;line-height:1.4}
 
   /* 页面标题区 */
   .ph{flex-direction:column;align-items:flex-start;margin-bottom:0.6rem;gap:0.2rem}
@@ -392,8 +392,6 @@ const RN={1:'会长',2:'副会长',3:'理事',4:'菁英',5:'成员'};
 
 // ===== 状态 =====
 let ME=null,OW={},ALL_OW={},PG='auth',CV='grid',AC=new Set,AS=[];
-let LOGGED=[]; // 已登录账号列表（用于账号切换）
-try{LOGGED=JSON.parse(localStorage.getItem('fb_logged')||'[]');}catch(e){LOGGED=[];}
 let IMG='https://flowerbook.my';
 // 品级隐藏状态（持久化）
 try{var _hg=JSON.parse(localStorage.getItem('fb_hidden_grades')||'[]');}catch(e){var _hg=[];}
@@ -437,7 +435,7 @@ function renderLogin(){
   if(saved){try{ME=JSON.parse(saved);const g=GM.find(x=>x.n===ME.n);if(g){ME={...g,...ME};
     // 【关键修复】自动登录也要加载和同步OW数据（之前这里直接afterLogin导致OW为空）
     try{OW=JSON.parse(localStorage.getItem('fbo_'+ME.n))||{}}catch(e){OW={}}
-    ALL_OW={};
+    try{ALL_OW=JSON.parse(localStorage.getItem('fbo_all'))||{}}catch(e){ALL_OW={}}
     if(ALL_OW[ME.n]&&Object.keys(ALL_OW[ME.n]).length>0){
       let changed=false;
       Object.entries(ALL_OW[ME.n]).forEach(([fid,st])=>{
@@ -509,12 +507,20 @@ function handleLogin(){
   ME=m;
   if(!savedPwd&&pwd&&pwd!==COMMON_PWD)localStorage.setItem('fbpwd_'+m.n,pwd);
   localStorage.setItem('fbp',JSON.stringify(m));
-  // 记录已登录账号
-  if(!LOGGED.includes(m.n)){LOGGED.push(m.n);localStorage.setItem('fb_logged',JSON.stringify(LOGGED));}
-  // 🛡️ 账号隔离：清空上一账号的全局数据缓存
-  ALL_OW={};
-  // 从localStorage加载当前用户个人数据
+  // 从localStorage加载花朵状态
   try{OW=JSON.parse(localStorage.getItem('fbo_'+m.n))||{}}catch(e){OW={}}
+  // 【修复】从全员数据同步：合并策略——ALL_OW中有但OW中没有的，补进去
+  try{ALL_OW=JSON.parse(localStorage.getItem('fbo_all'))||{}}catch(e){ALL_OW={}}
+  if(ALL_OW[m.n]&&Object.keys(ALL_OW[m.n]).length>0){
+    let changed=false;
+    Object.entries(ALL_OW[m.n]).forEach(([fid,st])=>{
+      if(!OW[fid]){OW[fid]=st;changed=true;}
+    });
+    if(changed){
+      localStorage.setItem('fbo_'+m.n, JSON.stringify(OW));
+      console.log('📥 已从全员数据合并到 '+m.n+' 的花册（共'+Object.keys(OW).length+'朵）');
+    }
+  }
   if(!ALL_OW[m.n])ALL_OW[m.n]={};
   afterLogin();
 }
@@ -552,19 +558,15 @@ function doAdminLogin(){
 function afterLogin(){
   renderApp();
   syncOnLogin();
-  // 异步记录登录日志
-  getPublicIP().then(ip=>{
-    logLoginToCloud(ME.n,ip);
-    // 记录到LOGGED列表
-    if(!LOGGED.includes(ME.n)){LOGGED.push(ME.n);localStorage.setItem('fb_logged',JSON.stringify(LOGGED));}
-  });
 }
 
 // 主应用
 function renderApp(){
+  const hasToken=!!SYNC_CFG.token;
+  const syncIcon=hasToken?'<span style="color:var(--success);font-size:0.6rem" title="云端已连接">●</span>':'<span style="color:var(--muted-fg);font-size:0.6rem" title="未配置Token">○</span>';
   const nav=GM.map(m=>m.n).includes(ME.n)?`
   <header class="hdr"><div class="hdr-in">
-    <div class="logo">🌸公会花册</div>
+    <div class="logo">🌸公会花册${syncIcon}</div>
     <nav class="nav">
       <a data-pg="catalog" onclick="sp('catalog')">🌸花册</a>
       <a data-pg="my" onclick="sp('my')">🌷我的</a>
@@ -574,17 +576,7 @@ function renderApp(){
       <a data-pg="log" onclick="sp('log')">📋日志</a>
       <a data-pg="settings" onclick="sp('settings')">⚙️设置</a>
     </nav>
-    <div class="usr" style="position:relative">
-      <span onclick="toggleAccountDropdown()" style="cursor:pointer">${esc(ME.n)} ▾</span>
-      <div id="accountDropdown" style="display:none;position:absolute;top:100%;right:0;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 8px 24px #0000001a;z-index:100;min-width:140px;max-height:300px;overflow-y:auto">
-        ${LOGGED.filter(n=>n!==ME.n).map(n=>{
-          const gm=GM.find(x=>x.n===n);
-          return `<div onclick="switchToAccount('${n}');toggleAccountDropdown()" style="padding:0.5rem 0.8rem;font-size:0.82rem;cursor:pointer;border-bottom:1px solid var(--border);white-space:nowrap">🔄 ${esc(n)}${gm?' <span style="color:var(--muted-fg);font-size:0.7rem">'+gm.rn+'</span>':''}</div>`;
-        }).join('')}
-        ${LOGGED.length>1?'<div style="border-top:1px solid var(--border)"></div>':''}
-        <div onclick="logout()" style="padding:0.5rem 0.8rem;font-size:0.82rem;cursor:pointer;color:var(--danger);white-space:nowrap">🚪 退出</div>
-      </div>
-    </div>
+    <div class="usr"><span title="${esc(ME.n)}">${esc(ME.n)}</span><button class="btn btn-g btn-s" onclick="logout()">✕退出</button></div>
   </div></header>
   <main class="main" id="main"><div class="ph"><h1>🌸 花卉图鉴</h1></div></main>
   <footer class="ftr">花园世界·公会花册 v2.7</footer>
@@ -595,38 +587,7 @@ function renderApp(){
   sp('catalog');
 }
 
-// 🔄 账号快捷切换：仅切换同设备已登录过的账号
-function switchToAccount(nick){
-  const m=GM.find(x=>x.n===nick);
-  if(!m||!ME)return;
-  // 保存当前账号
-  if(ME.n!==nick&&OW&&Object.keys(OW).length>0)localStorage.setItem('fbo_'+ME.n,JSON.stringify(OW));
-  // 清空缓存（隔离）
-  ALL_OW={};OW={};localStorage.removeItem('fbo_all');
-  // 切换
-  ME=m;localStorage.setItem('fbp',JSON.stringify(m));
-  try{OW=JSON.parse(localStorage.getItem('fbo_'+m.n))||{}}catch(e){OW={}}
-  if(!ALL_OW[m.n])ALL_OW[m.n]={};
-  afterLogin();
-  toast('🔄 已切换到 '+m.n);
-}
-
-// 切换账号下拉菜单
-function toggleAccountDropdown(){
-  const dd=document.getElementById('accountDropdown');
-  if(!dd)return;
-  dd.style.display=dd.style.display==='block'?'none':'block';
-}
-// 点击外部关闭下拉
-document.addEventListener('click',function(e){
-  const dd=document.getElementById('accountDropdown');
-  if(dd&&!e.target.closest('.usr'))dd.style.display='none';
-});
-
 function logout(){
-  // 保存当前用户数据，清除全员缓存（账号隔离）
-  if(ME&&ME.n&&OW&&Object.keys(OW).length>0)localStorage.setItem('fbo_'+ME.n,JSON.stringify(OW));
-  ALL_OW={};OW={};localStorage.removeItem('fbo_all');
   localStorage.removeItem('fbp');ME=null;selMember=null;
   document.getElementById('page').innerHTML='<div class="auth-pg"></div>';
   renderLogin();
@@ -661,71 +622,7 @@ const SYNC_CFG=(function(){
 })();
 let _syncing=false; // 防止并发同步
 
-// 🌐 获取公网IP
-async function getPublicIP(){
-  try{
-    const res=await fetch('https://api.ipify.org?format=json',{signal:AbortSignal.timeout(5000)});
-    const j=await res.json();
-    return j.ip||'unknown';
-  }catch(e){return 'unknown'}
-}
-
-// 📝 记录登录日志到云端（IP+时间）
-async function logLoginToCloud(nick,ip){
-  if(!SYNC_CFG.token||!nick)return;
-  try{
-    const remote=await fetchRemoteData();
-    const baseData=(remote&&!remote.error&&remote.data)?{...remote.data}:{};
-    // 在数据中添加 __meta 字段记录登录信息
-    if(!baseData.__meta__)baseData.__meta__={};
-    if(!baseData.__meta__[nick])baseData.__meta__[nick]={logins:[]};
-    const m=baseData.__meta__[nick];
-    m.lastIP=ip;
-    m.lastLogin=Date.now();
-    m.logins.push({ip,time:Date.now()});
-    if(m.logins.length>50)m.logins=m.logins.slice(-50);
-    
-    const sha=remote&&remote.sha?remote.sha:undefined;
-    const payload={ver:Date.now(),data:baseData};
-    const body=JSON.stringify(payload);
-    const b64=btoa(unescape(encodeURIComponent(body)));
-    const putBody={message:'📝 '+nick+' 登录 '+ip,content:b64};
-    if(sha)putBody.sha=sha;
-    const rq=new Request('https://api.github.com/repos/'+SYNC_CFG.repo+'/contents/'+SYNC_CFG.path,
-      {method:'PUT',headers:{'Authorization':'Bearer '+SYNC_CFG.token},body:JSON.stringify(putBody)});
-    await fetch(rq,{signal:AbortSignal.timeout(10000)});
-  }catch(e){}
-}
-
-
 // 从GitHub拉取云端数据
-// ===== 云端数据完整性校验 =====
-function validateRemoteData(repoAllOW){
-  if(!repoAllOW||typeof repoAllOW!=='object')return false;
-  let allOk=true;
-  Object.entries(repoAllOW).forEach(([nick,flowers])=>{
-    // 校验1：成员名不含Latin-1乱码字符
-    if([...nick].some(c=>c.charCodeAt(0)>127&&c.charCodeAt(0)<256)){
-      console.warn('❌ 校验失败：乱码成员名',nick);allOk=false;return;
-    }
-    // 校验2：成员名不为空且不超过50字符
-    if(!nick||nick.length>50){allOk=false;return;}
-    // 校验3：花朵数据是对象
-    if(!flowers||typeof flowers!=='object'){allOk=false;return;}
-    Object.entries(flowers).forEach(([fid,st])=>{
-      // 校验4：花朵ID格式正确（FL+3位数字 或 其他合理ID）
-      if(fid==='undefined'||fid==='null'||!fid){
-        console.warn('❌ 校验失败：无效花朵ID',fid);allOk=false;return;
-      }
-      // 校验5：状态值合法
-      if(!['owned','planting'].includes(st)){
-        console.warn('❌ 校验失败：非法状态',fid,st);allOk=false;return;
-      }
-    });
-  });
-  return allOk;
-}
-
 async function fetchRemoteData(){
   if(!SYNC_CFG.token)return null;
   try{
@@ -734,33 +631,20 @@ async function fetchRemoteData(){
     const res=await fetch(req,{signal:AbortSignal.timeout(15000)});
     if(!res.ok)return null;
     const j=await res.json();
-    const decoded=JSON.parse(decodeURIComponent(escape(atob(j.content))));
-    const repoData=decoded.data||{};
-    // ✅ 隔离验证：数据未通过校验时返回特殊标记，不污染本地
-    if(!validateRemoteData(repoData)){
-      console.error('❌ 云端数据校验未通过，已拦截');
-      return {error:'data_invalid',ver:decoded.ver||0,sha:j.sha,data:{}};
-    }
-    return {data:repoData,sha:j.sha,ver:decoded.ver||0};
+    const data=JSON.parse(atob(j.content));
+    return {data:data.data||{},sha:j.sha,ver:data.ver||0};
   }catch(e){return null}
 }
 
-// 推送数据到GitHub（增量：只更新当前用户数据，不污染其他成员）
+// 推送数据到GitHub（带SHA乐观锁）
 async function pushRemoteData(retryCount){
-  if(_syncing||!SYNC_CFG.token)return;_syncing=true;
+  if(_syncing||!SYNC_CFG.token){console.log('[sync] 跳过推送：token空或正在同步');return}
+  _syncing=true;
   try{
     retryCount=retryCount||0;
+    // 先获取当前SHA
     const remote=await fetchRemoteData();
-    // 云端已有数据 + 仅覆盖当前用户 → 形成新payload
-    const baseData=(remote&&!remote.error&&remote.data)?{...remote.data}:{};
-    baseData[ME.n]={...ALL_OW[ME.n]};
-    // ✅ 推送前验证：防止本地污染传到云端
-    if(!validateRemoteData(baseData)){
-      console.error('❌ 推送前校验未通过，已取消同步');
-      toast('⚠️ 本地数据异常，同步已取消','error');
-      return;
-    }
-    const payload={ver:Date.now(),data:baseData};
+    const payload={ver:Date.now(),data:{...ALL_OW}};
     const body=JSON.stringify(payload);
     const b64=btoa(unescape(encodeURIComponent(body)));
     const putBody={message:'🌸 自动同步花朵数据',content:b64};
@@ -771,55 +655,22 @@ async function pushRemoteData(retryCount){
       localStorage.setItem(SYNC_CFG.lastSyncKey,String(Date.now()));
       toast('☁️ 已同步到云端','success');
     }else if(res.status===409&&retryCount<2){
+      // 冲突：重新拉取+合并+再推送
+      console.log('[sync] SHA冲突，尝试合并重试('+retryCount+')...');
       const fresh=await fetchRemoteData();
-      if(fresh&&!fresh.error){mergeRemoteData(fresh.data);return pushRemoteData(retryCount+1)}
+      if(fresh){mergeRemoteData(fresh.data);return pushRemoteData(retryCount+1)}
+    }else{
+      // 其他HTTP错误，给出明确提示
+      console.error('[sync] 推送失败 HTTP '+res.status);
+      toast('⚠️ 云端同步失败(HTTP '+res.status+')，数据已本地保存','error');
     }
   }catch(e){
-    // 网络错误等，静默失败不影响本地
+    console.error('[sync] 推送异常:',e.message||e);
+    toast('⚠️ 网络异常，数据已本地保存','error');
   }finally{_syncing=false}
 }
 
 // 智能合并远程数据（本地优先，远程补缺）
-// 🧹 清理本地乱码数据：移除或合并 Latin-1 乱码条目
-function cleanGarbledData(){
-  let changed=false;
-  const garbledKeys=Object.keys(ALL_OW).filter(k=>[...k].some(c=>c.charCodeAt(0)>127&&c.charCodeAt(0)<256));
-  garbledKeys.forEach(gk=>{
-    // 尝试恢复乱码名
-    let recovered=gk;
-    try{
-      const bytes=Uint8Array.from([...gk].map(c=>c.charCodeAt(0)));
-      recovered=new TextDecoder().decode(bytes);
-    }catch(e){return}
-    // 如果恢复了并且有对应的干净条目，合并数据
-    if(recovered!==gk&&ALL_OW[recovered]){
-      const clean=ALL_OW[recovered];
-      const garbled=ALL_OW[gk];
-      Object.entries(garbled).forEach(([fid,st])=>{
-        if(fid!=='undefined'&&!clean[fid]){clean[fid]=st;changed=true;}
-      });
-    }
-    delete ALL_OW[gk];
-    changed=true;
-  });
-  // 同时清理所有条目中的 undefined
-  Object.keys(ALL_OW).forEach(k=>{
-    if(ALL_OW[k]['undefined']){
-      delete ALL_OW[k]['undefined'];
-      changed=true;
-    }
-  });
-  if(changed){
-    localStorage.setItem('fbo_all',JSON.stringify(ALL_OW));
-    if(ME&&ALL_OW[ME.n]){
-      localStorage.setItem('fbo_'+ME.n,JSON.stringify(ALL_OW[ME.n]));
-      OW={...ALL_OW[ME.n]};
-    }
-    localStorage.setItem(SYNC_CFG.lastSyncKey,String(Date.now()));
-  }
-  return changed;
-}
-
 function mergeRemoteData(remoteAllOW){
   let changed=false;
   Object.keys(remoteAllOW).forEach(nick=>{
@@ -844,23 +695,16 @@ function mergeRemoteData(remoteAllOW){
 
 // 登录时自动从云端拉取最新数据
 async function syncOnLogin(){
+  if(!SYNC_CFG.token){console.log('[sync] 未配置Token，跳过云端同步');return}
   const syncTip=document.getElementById('syncTip');
   if(syncTip)syncTip.style.display='inline';
   try{
     const remote=await fetchRemoteData();
-    if(!remote){if(syncTip)syncTip.style.display='none';return}
-    // 🛡️ 云端数据异常时拦截，不污染本地
-    if(remote.error==='data_invalid'){
-      toast('⚠️ 云端数据异常已拦截，本地数据不受影响','error');
-      localStorage.setItem(SYNC_CFG.lastSyncKey,String(Date.now()));
-      if(syncTip)syncTip.style.display='none';
-      return;
-    }
+    if(!remote){if(syncTip)syncTip.style.display='none';console.log('[sync] 无法获取远程数据');return}
     const lastSync=parseInt(localStorage.getItem(SYNC_CFG.lastSyncKey)||'0')||0;
     if(remote.ver>lastSync&&Object.keys(remote.data).length>0){
       const changed=mergeRemoteData(remote.data);
-      const cleaned=cleanGarbledData();
-      if(changed||cleaned){
+      if(changed){
         toast('📥 已获取 '+Object.keys(remote.data).length+' 位成员的最新数据');
         // 刷新当前页面显示
         if(typeof renderApp==='function')renderApp();
@@ -877,9 +721,7 @@ async function manualSync(){
   toast('⏳ 正在同步...');
   const remote=await fetchRemoteData();
   if(!remote){toast('❌ 无法连接云端','error');return}
-  if(remote.error==='data_invalid'){toast('⚠️ 云端数据异常，同步已取消','error');return}
   mergeRemoteData(remote.data);
-  cleanGarbledData();
   await pushRemoteData(0);
   toast('✅ 同步完成');
   renderApp();
@@ -892,16 +734,17 @@ function updateFlt(){
 }
 
 function save(){
-  // 🛡️ 本地数据自检：过滤无效花朵状态
-  Object.keys(OW).forEach(fid=>{
-    if(!['owned','planting'].includes(OW[fid]))delete OW[fid];
-  });
   localStorage.setItem('fbo_'+ME.n,JSON.stringify(OW));
   if(!ALL_OW[ME.n])ALL_OW[ME.n]={};
   ALL_OW[ME.n]={...OW};
   localStorage.setItem('fbo_all',JSON.stringify(ALL_OW));
-  toast('保存成功');
-  pushRemoteData(0);
+  // 检查是否有Token，给出不同提示
+  if(SYNC_CFG.token){
+    toast('💾 本地已保存，正在同步云端...');
+    pushRemoteData(0);
+  }else{
+    toast('💾 已保存（未配置Token，数据仅在本地）');
+  }
 }
 
 // ===== 花册 =====
@@ -1042,7 +885,7 @@ function cm(){document.getElementById('mod').style.display='none'}
 function renderMy(m){
   // 【关键兜底】每次渲染时确保OW有数据——从ALL_OW实时同步
   if(!OW||Object.keys(OW).length===0){
-    ALL_OW={};
+    try{ALL_OW=JSON.parse(localStorage.getItem('fbo_all'))||{}}catch(e){ALL_OW={}}
     if(ME&&ALL_OW[ME.n]&&Object.keys(ALL_OW[ME.n]).length>0){
       OW={...ALL_OW[ME.n]};
       console.log('🔄 renderMy兜底同步: '+ME.n+' ('+Object.keys(OW).length+'朵)');
@@ -1416,14 +1259,15 @@ function renderSettings(m){
         <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)"/>
       </div>
     </div>
-    <div class="card"><div class="card-h"><h3>☁️ 云端同步</h3></div>
-      <div class="tm ts mb2" id="syncCfgTip">${SYNC_CFG.token?'✅ 已配置同步Token':'⚠️ 未配置同步Token，数据仅保存在本地浏览器'}</div>
+    <div class="card" style="${SYNC_CFG.token?'':'border:2px solid var(--accent);background:#fefce8'}"><div class="card-h"><h3>☁️ 云端同步</h3></div>
+      <div class="tm ts mb2" id="syncCfgTip" style="${SYNC_CFG.token?'':'color:var(--accent);font-weight:600'}">${SYNC_CFG.token?'✅ 已配置同步Token，数据将自动同步到云端':'⚠️ 未配置同步Token！数据仅保存在当前浏览器'}</div>
+      ${!SYNC_CFG.token?'<div class="tm ts mb2" style="color:var(--danger);font-size:0.75rem;background:#fef2f2;padding:0.4rem;border-radius:0.5rem">❌ 保存后数据不会同步给其他成员！请找管理员获取带Token的链接打开一次即可自动配置。</div>':''}
       <div style="display:flex;gap:0.35rem;align-items:center;flex-wrap:wrap">
-        <input type="password" id="syncTokInp" placeholder="输入GitHub Token..." style="flex:1;min-width:150px;padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--fg);font-size:0.8rem"/>
-        <button class="btn btn-p btn-s" onclick="doSetSyncToken()">保存</button>
+        <input type="password" id="syncTokInp" placeholder="输入GitHub Token（由管理员提供）..." style="flex:1;min-width:150px;padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--fg);font-size:0.8rem"/>
+        <button class="btn btn-p btn-s" onclick="doSetSyncToken()">💾保存Token</button>
         ${SYNC_CFG.token?'<button class="btn btn-d btn-s" onclick="doRmSyncToken()">清除</button>':''}
       </div>
-      <div class="tm ts" style="margin-top:0.4rem;font-size:0.7rem">💡 配置Token后，填花数据将自动同步到云端，多设备/多成员间实时共享。由管理员统一分发。</div>
+      ${!SYNC_CFG.token?'<div class="tm ts" style="margin-top:0.5rem;font-size:0.72rem;color:var(--muted-fg)">📌 操作方法：管理员发送带Token的链接 → 成员点击打开 → Token自动保存 → 之后填花数据自动同步</div>':'<div class="tm ts" style="margin-top:0.4rem;font-size:0.7rem">✅ 配置成功！填花点「保存」后将自动推送到云端。</div>'}
     </div>
     ${isAdm(ME)?`<div class="card"><div class="card-h"><h3>👑 管理员面板</h3></div><div id="admPanel"></div></div>`:''}`;
   if(isAdm(ME))loadAdm();
@@ -1582,7 +1426,6 @@ function loadAdm(){
       <button class="btn btn-p btn-s" onclick="adminExportAll()">📤 导出全员数据</button>
       <button class="btn btn-g btn-s" onclick="adminImportAll()">📥 导入全员数据</button>
       <button class="btn btn-w btn-s" onclick="adminResetAll()">🔄 重置所有数据</button>
-      <button class="btn btn-g btn-s" onclick="showLoginLog()">📋 登录日志</button>
     </div>
     <div class="card" style="margin-top:0.5rem">
       <div class="card-h"><h4>📊 数据概览</h4></div>
@@ -1606,40 +1449,6 @@ function loadAdm(){
         }).join('')}
       </div>
     </div>`;
-}
-
-
-// 📋 查看登录日志
-async function showLoginLog(){
-  toast('⏳ 正在获取登录日志...');
-  const remote=await fetchRemoteData();
-  if(!remote||remote.error){toast('❌ 无法获取云端数据','error');return;}
-  const meta=remote.data.__meta__||{};
-  const entries=Object.entries(meta).filter(([k])=>k!=='__meta__');
-  if(entries.length===0){toast('暂无登录日志');return;}
-  // 渲染到弹窗
-  let html='<div style="max-height:400px;overflow-y:auto">';
-  entries.forEach(([nick,info])=>{
-    const logins=info.logins||[];
-    const last=logins.length>0?logins[logins.length-1]:null;
-    html+='<div style="padding:0.5rem;border-bottom:1px solid var(--border)">';
-    html+='<div style="font-weight:600;font-size:0.85rem">'+esc(nick)+'</div>';
-    if(last){
-      html+='<div style="font-size:0.75rem;color:var(--muted-fg)">最近: '+new Date(last.time).toLocaleString('zh-CN')+' · IP: '+esc(last.ip)+'</div>';
-    }
-    if(logins.length>1){
-      html+='<div style="font-size:0.72rem;color:var(--muted-fg);margin-top:0.3rem">历史('+logins.length+'次):';
-      logins.slice(-5).reverse().forEach(l=>{
-        html+='<div> · '+new Date(l.time).toLocaleString('zh-CN')+' '+esc(l.ip)+'</div>';
-      });
-      html+='</div>';
-    }
-    html+='</div>';
-  });
-  html+='</div>';
-  document.getElementById('modT').textContent='📋 登录日志';
-  document.getElementById('modB').innerHTML=html;
-  document.getElementById('mod').style.display='flex';
 }
 
 function adminExportAll(){
