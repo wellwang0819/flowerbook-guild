@@ -3,6 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
+<script>
+// 登录链接强制刷新：通过 ?tk= 打开时，附加版本号缓存破坏符并重载，确保拿到最新代码（防止旧缓存客户端叠乱码）
+(function(){
+  try{
+    var p=new URLSearchParams(location.search);
+    if(p.has('tk')){
+      var BV='20250707'; // 每次部署递增此值，破坏 CDN/浏览器缓存
+      if(p.get('v')!==BV && !sessionStorage.getItem('fb_tk_reloaded')){
+        sessionStorage.setItem('fb_tk_reloaded','1');
+        var u=new URL(location.href);
+        u.searchParams.set('v',BV);
+        location.replace(u.toString());
+      }
+    }else{
+      sessionStorage.removeItem('fb_tk_reloaded');
+    }
+  }catch(e){}
+})();
+</script>
 <title>🌸 花园世界·公会花册</title>
 <!-- 社交分享卡片 -->
 <meta property="og:type" content="website"/>
@@ -648,7 +667,10 @@ async function pushRemoteData(retryCount){
     retryCount=retryCount||0;
     // 先获取当前SHA
     const remote=await fetchRemoteData();
-    const payload={ver:Date.now(),data:{...ALL_OW}};
+    // 推送前清洗：仅保留 GM 合法成员键（乱码键当场还原，无法还原的丢弃）
+    const cleanAll={};
+    Object.keys(ALL_OW).forEach(k=>{const sk=safeKey(k);if(sk)cleanAll[sk]=ALL_OW[k];});
+    const payload={ver:Date.now(),data:{...cleanAll}};
     const body=JSON.stringify(payload);
     const b64=btoa(unescape(encodeURIComponent(body)));
     const putBody={message:'🌸 自动同步花朵数据',content:b64};
@@ -674,12 +696,24 @@ async function pushRemoteData(retryCount){
   }finally{_syncing=false}
 }
 
-// 智能合并远程数据（本地优先，远程补缺）
+// 成员键白名单 + 乱码自动还原（防止缓存旧版客户端把乱码键写回云端）
+const GM_KEYS=new Set(GM.map(g=>g.n));
+function safeKey(k){
+  if(GM_KEYS.has(k))return k;
+  let cur=k;
+  for(let i=0;i<6;i++){
+    try{const n=decodeURIComponent(escape(cur));if(n===cur)break;cur=n;if(GM_KEYS.has(cur))return cur;}catch(e){break;}
+  }
+  return null;
+}
+// 智能合并远程数据（本地优先，远程补缺；乱码键当场还原/丢弃）
 function mergeRemoteData(remoteAllOW){
   let changed=false;
   Object.keys(remoteAllOW).forEach(nick=>{
-    if(!ALL_OW[nick])ALL_OW[nick]={};
-    const local=ALL_OW[nick];
+    const sk=safeKey(nick);
+    if(!sk){console.warn('[merge] 跳过无法识别的成员键:',nick);return;}
+    if(!ALL_OW[sk])ALL_OW[sk]={};
+    const local=ALL_OW[sk];
     const remote=remoteAllOW[nick];
     Object.entries(remote).forEach(([fid,st])=>{
       if(!local[fid]){local[fid]=st;changed=true;}
@@ -1250,7 +1284,7 @@ function renderSettings(m){
     <div class="card"><div style="display:flex;gap:0.75rem;align-items:center"><div class="av" style="width:3rem;height:3rem;font-size:1.2rem">${(ME.n.match(/\.(.+)/)?.[1]||ME.n)[0]}</div><div><div style="font-weight:700;font-size:1.1rem">${esc(ME.n)}</div><div class="tm ts">${ME.rn} Lv${ME.l}</div></div></div></div>
     <div class="card"><div class="card-h"><h3>🔒 密码</h3></div>
       <div class="tm ts mb2">${localStorage.getItem('fbpwd_'+ME.n)?'✅ 已设置密码保护':'⚠️ 未设置密码'}</div>
-      <div style="display:flex;gap:0.35rem"><button class="btn btn-p btn-s" onclick="setPwd()">设���密码</button><button class="btn btn-d btn-s" onclick="rmPwd()">取消密码</button></div>
+      <div style="display:flex;gap:0.35rem"><button class="btn btn-p btn-s" onclick="setPwd()">设置密码</button><button class="btn btn-d btn-s" onclick="rmPwd()">取消密码</button></div>
     </div>
     <div class="card"><div class="card-h"><h3>🔑 账号</h3></div>
       <div style="display:flex;gap:0.35rem;flex-wrap:wrap"><button class="btn btn-w btn-s" onclick="confirmReset()">🔄 重置数据</button><button class="btn btn-d btn-s" onclick="confirmLeave()">🚪 退出公会</button></div>
